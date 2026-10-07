@@ -16,7 +16,8 @@ fun Application.initKitshnAcra() {
             "tandoor_credentials"
         )
 
-        httpSender {
+        // Menu fork: crash reports only go out when kitshn.properties names a receiver
+        if(BuildConfig.ACRA_HTTP_URI.isNotBlank()) httpSender {
             uri = BuildConfig.ACRA_HTTP_URI
             basicAuthLogin = BuildConfig.ACRA_HTTP_BASIC_AUTH_LOGIN
             basicAuthPassword = BuildConfig.ACRA_HTTP_BASIC_AUTH_PASSWORD

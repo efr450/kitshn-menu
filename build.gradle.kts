@@ -33,7 +33,7 @@ val kitshnAlternateBuildVersionName by extra(kitshnAlternateVersionName.split(".
     this[0] + "." + this[1] + "." + kitshnVersionCode
 })
 
-val kitshnAndroidPackageName by extra("de.kitshn.android")
+val kitshnAndroidPackageName by extra("io.github.efr450.menu")
 val kitshnDesktopPackageName by extra("kitshn")
 
 val kitshnIsBeta by extra(false)

@@ -1,0 +1,5 @@
+# Upstream history (kitshn-app/kitshn): its shared crash-report login and a docs example. Not ours; already public.
+8ad89eb8f0f46611e956b3e8d09af2a775827692:web/docs/build-and-config.md:generic-api-key:30
+edb80d7792a6ad81172382ff3f133650e9125e6b:web/docs/build-and-config.md:generic-api-key:15
+a22cb7c4cb9b426a1605fd46c80f7843f754f34c:kitshn.properties:generic-api-key:7
+4de1d57e0ca56b5e72c441e47ae664bcd4bbe71a:kitshn.properties:generic-api-key:6

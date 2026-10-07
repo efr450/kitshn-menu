@@ -40,3 +40,10 @@ Pods/
 /flatpak/source
 
 Package.resolved
+# Menu fork: local-only files
+CLAUDE.local.md
+.claude/
+.scratch/
+*.keystore
+signing.properties
+*-release.properties

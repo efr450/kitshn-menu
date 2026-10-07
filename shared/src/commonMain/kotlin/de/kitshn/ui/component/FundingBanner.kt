@@ -62,6 +62,9 @@ fun AutoFetchingFundingBanner(
     var event by remember { mutableStateOf<FundingEvent?>(null) }
 
     LaunchedEffect(Unit) {
+        // Menu fork: no funding banner without a funding API
+        if(BuildConfig.FUNDING_API.isBlank()) return@LaunchedEffect
+
         val state = FundingApiClient(BuildConfig.FUNDING_API)
             .state()
 
