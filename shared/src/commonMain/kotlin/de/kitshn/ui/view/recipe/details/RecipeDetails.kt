@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Link
@@ -158,6 +159,7 @@ import de.kitshn.ui.theme.Typography
 import de.kitshn.ui.view.ViewParameters
 import kitshn.shared.BuildConfig
 import kitshn.shared.generated.resources.Res
+import kitshn.shared.generated.resources.action_add_to_meal_plan
 import kitshn.shared.generated.resources.action_close
 import kitshn.shared.generated.resources.action_delete
 import kitshn.shared.generated.resources.action_edit
@@ -559,6 +561,25 @@ fun ViewRecipeDetails(
                             Icon(Icons.Rounded.Share, stringResource(Res.string.action_share))
                         }
 
+                        // Menu fork: "Add to meal plan" sits in the toolbar instead of the overflow menu
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val userPreference = client.userPreference.fetch()
+
+                                    mealPlanCreationDialogState.open(
+                                        MealPlanCreationAndEditDefaultValues(
+                                            recipeId = recipeOverview.id,
+                                            servings = recipeOverview.servings.toDouble(),
+                                            mealTypeId = userPreference.default_meal_type?.id
+                                        )
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Rounded.DateRange, stringResource(Res.string.action_add_to_meal_plan))
+                        }
+
                         var isMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
                         Box {
@@ -577,19 +598,6 @@ fun ViewRecipeDetails(
                                     manageRecipeInRecipeBooksDialogState.open(
                                         recipeId
                                     )
-                                },
-                                onAddToMealPlan = {
-                                    coroutineScope.launch {
-                                        val userPreference = client.userPreference.fetch()
-
-                                        mealPlanCreationDialogState.open(
-                                            MealPlanCreationAndEditDefaultValues(
-                                                recipeId = recipeOverview.id,
-                                                servings = recipeOverview.servings.toDouble(),
-                                                mealTypeId = userPreference.default_meal_type?.id
-                                            )
-                                        )
-                                    }
                                 },
                                 onAddToShopping = {
                                     recipe?.let {

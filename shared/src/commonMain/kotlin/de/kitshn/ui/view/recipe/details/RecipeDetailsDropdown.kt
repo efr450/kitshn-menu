@@ -23,7 +23,7 @@ import org.jetbrains.compose.resources.stringResource
 fun RecipeDetailsDropdown(
     expanded: Boolean,
     onManageRecipeBooks: () -> Unit,
-    onAddToMealPlan: () -> Unit,
+    onAddToMealPlan: (() -> Unit)? = null,
     onAddToShopping: () -> Unit,
     onAllocateIngredients: () -> Unit,
     onDismiss: () -> Unit
@@ -48,7 +48,7 @@ fun RecipeDetailsDropdown(
 @Composable
 fun RecipeDetailsDropdownContent(
     onManageRecipeBooks: () -> Unit,
-    onAddToMealPlan: () -> Unit,
+    onAddToMealPlan: (() -> Unit)? = null,
     onAddToShopping: () -> Unit,
     onAllocateIngredients: () -> Unit,
     onDismiss: () -> Unit
@@ -66,7 +66,8 @@ fun RecipeDetailsDropdownContent(
         }
     )
 
-    DropdownMenuItem(
+    // Menu fork: hidden when the caller shows "Add to meal plan" elsewhere
+    if(onAddToMealPlan != null) DropdownMenuItem(
         leadingIcon = {
             Icon(Icons.Rounded.DateRange, stringResource(Res.string.action_add_to_meal_plan))
         },
