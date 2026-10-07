@@ -119,7 +119,7 @@ fun IndividualShoppingListEntryDetailCard(
                             label = {
                                 Text(
                                     text = buildString {
-                                        append(entry.amount.formatAmount(fractional = fractional))
+                                        append(entry.amount.formatAmount(fractional = fractional, unit = entry.unit))
 
                                         if(entry.unit != null) {
                                             append(" ")

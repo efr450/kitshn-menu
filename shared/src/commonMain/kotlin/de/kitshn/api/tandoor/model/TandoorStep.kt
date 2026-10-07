@@ -164,8 +164,9 @@ class TandoorStep(
                     }
                     .replace(Regex("\\{\\{ *ingredients\\[(\\d+)\\]\\.amount *\\}\\}")) { // replaces ingredient amount templates
                         val index = it.destructured.component1().toInt()
-                        ingredients.getOrNull(index)?.amount?.let { amount ->
-                            (amount * scale).formatAmount(
+                        ingredients.getOrNull(index)?.let { ingredient ->
+                            ingredient.formatAmount(
+                                amount = ingredient.amount * scale,
                                 fractional = fractional
                             )
                         } ?: "Invalid ingredient template"
@@ -186,13 +187,17 @@ class TandoorStep(
                         val index = it.destructured.component1().toInt()
                         ingredients.getOrNull(index)?.note ?: "Invalid ingredient template"
                     }
-                    .replace(Regex("\\{\\{ *scale\\(((\\d|\\.)+)\\) *\\}\\}")) { // replaces scale templates
+                    // Menu fork: the lookahead reads the unit word after the template, which decides fraction vs decimal
+                    .replace(Regex("\\{\\{ *scale\\(((\\d|\\.)+)\\) *\\}\\}(?=(?: *([A-Za-z]+(?: oz)?))?)")) { // replaces scale templates
                         val number = it.destructured.component1().toDoubleOrNull()
 
                         if(number == null) {
                             "Invalid scale template"
                         } else {
-                            (number * scale).formatAmount(fractional)
+                            (number * scale).formatAmount(
+                                fractional = fractional,
+                                isVolume = isVolumeUnitName(it.destructured.component3())
+                            )
                         }
                     }.replace(
                         Regex("\\{#[\\w\\s.,;:\\-()\\/%°\"„“'’&\\\$€?!*+…]*#\\}"),

@@ -164,7 +164,7 @@ fun ShoppingListEntryListItem(
                     if(sharedAmount > 1.0) usePluralName = true
 
                     val value = StringBuilder()
-                    value.append(sharedAmount.formatAmount(showFractionalValues))
+                    value.append(sharedAmount.formatAmount(showFractionalValues, sharedUnit))
                     if((sharedUnit?.name ?: "").isNotBlank()) value.append(" ${sharedUnit!!.name}")
 
                     Pair(

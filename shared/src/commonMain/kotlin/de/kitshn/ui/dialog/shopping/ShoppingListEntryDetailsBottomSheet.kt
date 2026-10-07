@@ -141,7 +141,7 @@ fun ShoppingListEntryDetailsBottomSheet(
                     if(sharedAmount > 1.0) usePluralName = true
 
                     Pair(
-                        sharedAmount.formatAmount(showFractionalValues) +
+                        sharedAmount.formatAmount(showFractionalValues, sharedUnit) +
                                 (sharedUnit?.name?.let { " $it" } ?: ""),
                         entryList.all { it.checked }
                     )

@@ -23,6 +23,7 @@ import de.kitshn.api.tandoor.TandoorRequestState
 import de.kitshn.api.tandoor.TandoorRequestStateState
 import de.kitshn.api.tandoor.model.TandoorFood
 import de.kitshn.api.tandoor.model.TandoorKeyword
+import de.kitshn.api.tandoor.model.TandoorUnit
 import de.kitshn.ui.dialog.LaunchTimerInfoBottomSheetState
 import de.kitshn.ui.dialog.LaunchTimerRangeBottomSheetState
 import kitshn.shared.generated.resources.Res
@@ -168,13 +169,18 @@ fun Double.roundToPrecision(precision: Double): Double {
     return round(this / precision) * precision
 }
 
-fun Double.formatAmount(fractional: Boolean = true): String {
-    if(fractional) {
+// Menu fork: fractions only for volume units (½ cup); weights, counts and anything without
+// a unit read as decimals with at most 2 places (1.5 g)
+fun Double.formatAmount(fractional: Boolean = true, unit: TandoorUnit? = null): String =
+    formatAmount(fractional = fractional, isVolume = unit?.isVolume() == true)
+
+fun Double.formatAmount(fractional: Boolean, isVolume: Boolean): String {
+    if(fractional && isVolume) {
         val int = floor(this).toInt()
         val decimal = this - int
 
         val value = if(int == 0) "" else "$int "
-        return "$value${formatDecimalToFraction(decimal)}"
+        return "$value${formatDecimalToFraction(decimal)}".trimEnd()
     } else {
         try {
             return HumanReadable.number(this, 2).run {

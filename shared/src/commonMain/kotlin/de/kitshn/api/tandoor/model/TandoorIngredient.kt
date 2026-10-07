@@ -24,7 +24,7 @@ class TandoorIngredient(
     var tickedOff by mutableStateOf(false)
 
     fun formatAmount(amount: Double = this.amount, fractional: Boolean = true): String {
-        return amount.formatAmount(fractional)
+        return amount.formatAmount(fractional, unit)
     }
 
     fun getLabel(amount: Double = this.amount): String {
