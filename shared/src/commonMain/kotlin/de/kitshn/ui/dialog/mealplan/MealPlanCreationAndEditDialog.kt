@@ -277,7 +277,7 @@ fun MealPlanCreationAndEditDialog(
                                 if(recipeId == null) return@KitshnFormRecipeSearchFieldItem
 
                                 client.container.recipeOverview[recipeId]?.servings?.let {
-                                    servings = it.toDouble()
+                                    servings = it.toDouble() // Menu fork: was the recipe ID (#451)
                                 }
                             },
 

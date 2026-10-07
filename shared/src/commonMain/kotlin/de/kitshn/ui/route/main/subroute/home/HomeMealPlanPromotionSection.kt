@@ -18,7 +18,7 @@ import de.kitshn.api.tandoor.TandoorClient
 import de.kitshn.api.tandoor.model.TandoorMealPlan
 import de.kitshn.api.tandoor.model.recipe.TandoorRecipeOverview
 import de.kitshn.api.tandoor.rememberTandoorRequestState
-import de.kitshn.parseTandoorDate
+import de.kitshn.parseIsoTime
 import de.kitshn.ui.TandoorRequestErrorHandler
 import de.kitshn.ui.component.model.mealplan.HorizontalMealPlanCard
 import de.kitshn.ui.modifier.loadingPlaceHolder
@@ -72,18 +72,21 @@ fun RouteMainSubrouteHomeMealPlanPromotionSection(
                         .plus(day.plus, DateTimeUnit.DAY)
 
                 val filteredMealPlans = it.filter { mealPlan ->
-                    // compare UTC calendar days (#398, #423)
-                    mealPlan.from_date.parseTandoorDate() == promotionDay
+                    // Menu fork: multi-day plans count on every day in range
+                    mealPlan.isOnDay(promotionDay)
                 }.filter { mealPlan ->
                     // filter already cooked recipes
-                    if (mealPlan.recipe?.id == null) return@wrapRequest
+                    // Menu fork: keep title-only plans instead of abandoning the whole list
+                    if (mealPlan.recipe?.id == null) return@filter true
                     val recipe = client.recipe.retrieve(mealPlan.recipe.id)
 
                     recipe.last_cooked.run {
                         if(this == null) {
                             true
                         } else {
-                            recipe.last_cooked!!.parseTandoorDate() != promotionDay
+                            // Menu fork: last_cooked is a real moment; compare it in the device's
+                            // timezone, like promotionDay
+                            recipe.last_cooked!!.parseIsoTime().date != promotionDay
                         }
                     }
                 }.sortedBy { mp ->

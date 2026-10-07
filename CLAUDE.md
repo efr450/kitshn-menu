@@ -13,6 +13,8 @@ A fork of [kitshn](https://github.com/kitshn-app/kitshn) (Kotlin Multiplatform c
 
 - App ID, the "Menu" label, a periwinkle launcher background, and the `-menu.N` version suffix (`androidApp/build.gradle.kts`, release build type). Bump N for each build that ships.
 - `kitshn.properties`: crash-report receiver and funding API blanked. `Acra.kt` skips the HTTP sender and `FundingBanner.kt` skips the banner when they're blank.
+- Launcher shortcuts (`androidApp/src/main/res/xml/shortcuts.xml`) target our app ID.
+- Meal-plan days: `isMealPlanOnDay()` / `TandoorMealPlan.isOnDay()` decide which days a plan is on, for both the meal-plan grid and Home's Today/Tomorrow. Bulk "move" keeps a plan's length.
 - Meal-plan dates: `parseTandoorDate()` takes the date as Tandoor wrote it (Tandoor sends its own timezone offset) and `toStartOfDayString()` sends midnight without an offset. Do not convert to UTC or the device timezone: an 18:00-07:00 dinner is the next day in UTC. Tests: `MealPlanDateUtilsTest`.
 
 ## Build and test

@@ -26,7 +26,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import de.kitshn.api.tandoor.TandoorClient
 import de.kitshn.api.tandoor.model.TandoorMealPlan
-import de.kitshn.parseTandoorDate
 import de.kitshn.ui.component.LoadingGradientWrapper
 import de.kitshn.ui.component.model.mealplan.MealPlanDayCard
 import de.kitshn.ui.dialog.mealplan.MealPlanCreationAndEditDefaultValues
@@ -101,10 +100,8 @@ fun RouteMainSubrouteMealplanScaffoldContent(
                         MealPlanDayCard(
                             day = day,
                             mealPlanItems = list.toMutableList().filter { mealPlan ->
-                                // multi-day plans show on every day in range (#398)
-                                val from = mealPlan.from_date.parseTandoorDate()
-                                val to = mealPlan.to_date.parseTandoorDate()
-                                day in from..to
+                                // Menu fork: multi-day plans show on every day in range
+                                mealPlan.isOnDay(day)
                             }.sortedBy { mealPlan ->
                                 mealPlan.meal_type.time
                             },

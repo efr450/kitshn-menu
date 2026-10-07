@@ -25,7 +25,8 @@ fun Application.initKitshnAcra() {
 
         dialog {
             reportDialogClass = AcraCrashReportDialog::class.java
-            enabled = true
+            // Menu fork: don't offer to send a report that has nowhere to go
+            enabled = BuildConfig.ACRA_HTTP_URI.isNotBlank()
         }
     }
 }

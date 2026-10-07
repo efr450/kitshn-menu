@@ -60,10 +60,8 @@ class MealPlanDateUtilsTest {
 
     @Test
     fun mealPlanDayFilter_multiDayPlan_coversEveryDayInRange() {
-        val from = "2026-10-07T18:00:00-07:00".parseTandoorDate()
-        val to = "2026-10-09T18:00:00-07:00".parseTandoorDate()
-
-        fun isShownOn(day: LocalDate) = day in from..to
+        fun isShownOn(day: LocalDate) =
+            isMealPlanOnDay("2026-10-07T18:00:00-07:00", "2026-10-09T18:00:00-07:00", day)
 
         assertFalse(isShownOn(LocalDate(2026, 10, 6)))
         assertTrue(isShownOn(LocalDate(2026, 10, 7)))

@@ -24,6 +24,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import de.kitshn.api.tandoor.TandoorClient
 import de.kitshn.api.tandoor.TandoorRequestState
+import de.kitshn.parseTandoorDate
 import de.kitshn.toLocalDate
 import de.kitshn.ui.component.icons.IconWithState
 import de.kitshn.ui.dialog.mealplan.MealPlanEditDialogState
@@ -36,7 +37,10 @@ import kitshn.shared.generated.resources.action_move
 import kitshn.shared.generated.resources.navigation_meal_plan
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +98,9 @@ fun RouteMainSubrouteMealplanTopAppBar(
                         coroutineScope.launch {
                             selectionModeState.selectedItems.forEach {
                                 val mealPlan = client.container.mealPlan[it] ?: return@forEach
+                                // Menu fork: moving keeps a multi-day plan's length
+                                val days = mealPlan.from_date.parseTandoorDate()
+                                    .daysUntil(mealPlan.to_date.parseTandoorDate())
                                 mealPlanMoveRequestState.wrapRequest {
                                     mealPlan.partialUpdate(
                                         title = mealPlan.title,
@@ -101,7 +108,7 @@ fun RouteMainSubrouteMealplanTopAppBar(
                                         servings = mealPlan.servings,
                                         note = mealPlan.note,
                                         from_date = date,
-                                        to_date = date,
+                                        to_date = date.plus(days, DateTimeUnit.DAY),
                                         meal_type = mealPlan.meal_type,
                                         addshopping = mealPlan.shopping
                                     )

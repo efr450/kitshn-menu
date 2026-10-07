@@ -7,6 +7,7 @@ import de.kitshn.api.tandoor.delete
 import de.kitshn.api.tandoor.model.recipe.TandoorRecipeOverview
 import de.kitshn.api.tandoor.patchObject
 import de.kitshn.json
+import de.kitshn.isMealPlanOnDay
 import de.kitshn.parseTandoorDate
 import de.kitshn.toColorInt
 import de.kitshn.toStartOfDayString
@@ -91,6 +92,9 @@ class TandoorMealPlan(
 ) {
     @Transient
     var client: TandoorClient? = null
+
+    // Menu fork
+    fun isOnDay(day: LocalDate) = isMealPlanOnDay(from_date, to_date, day)
 
     companion object {
         fun parse(client: TandoorClient, data: String): TandoorMealPlan {
