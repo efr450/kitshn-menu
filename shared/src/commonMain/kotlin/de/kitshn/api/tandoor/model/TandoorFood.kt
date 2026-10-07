@@ -18,6 +18,8 @@ data class TandoorFood(
     val full_name: String? = null,
     var supermarket_category: TandoorSupermarketCategory? = null,
     val ignore_shopping: Boolean = false,
+    // Menu fork: Tandoor's per-household "On Hand"; null when the server leaves it out
+    val food_onhand: Boolean? = null,
     val open_data_slug: String? = null
 )
 

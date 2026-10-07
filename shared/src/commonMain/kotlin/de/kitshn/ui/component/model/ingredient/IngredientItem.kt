@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -42,6 +43,8 @@ fun IngredientItem(
     servingsFactor: Double = 1.0,
 
     trailingContent: @Composable () -> Unit = {},
+    // Menu fork: drawn right after the food name (the shopping dialog's pantry pill)
+    labelSuffix: @Composable () -> Unit = {},
 
     colors: ListItemColors = ListItemDefaults.colors(),
 
@@ -130,7 +133,9 @@ fun IngredientItem(
         content = {
             if(ingredient == null) return@SegmentedListItem
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
+                modifier = Modifier.weight(1f, fill = false),
                 text = ingredient.getLabel(amount),
                 color = when(foodHasRecipe) {
                     true ->MaterialTheme.colorScheme.primary
@@ -145,6 +150,8 @@ fun IngredientItem(
                     false -> if(showTickedOff) TextDecoration.LineThrough else null
                 }
             )
+            labelSuffix()
+            }
         },
         supportingContent = if((ingredient?.note ?: "").isNotBlank()) {
             {

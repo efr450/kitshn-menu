@@ -28,6 +28,8 @@ fun IngredientsList(
 
     itemModifier: (ingredient: TandoorIngredient) -> Modifier = { Modifier },
     itemTrailingContent: @Composable (ingredient: TandoorIngredient) -> Unit = {},
+    // Menu fork: see IngredientItem.labelSuffix
+    itemLabelSuffix: @Composable (ingredient: TandoorIngredient) -> Unit = {},
 
     factor: Double = 1.0,
     loadingState: ErrorLoadingSuccessState = ErrorLoadingSuccessState.SUCCESS,
@@ -119,6 +121,7 @@ fun IngredientsList(
                     IngredientItem(
                         modifier = itemModifier(ingredient),
                         trailingContent = { itemTrailingContent(ingredient) },
+                        labelSuffix = { itemLabelSuffix(ingredient) },
 
                         ingredient = ingredient,
                         servingsFactor = factor,

@@ -19,6 +19,7 @@ A fork of [kitshn](https://github.com/kitshn-app/kitshn) (Kotlin Multiplatform c
 - Amounts: only volume units (`TandoorUnit.isVolume()`) show fractions; weights, counts, servings and nutrition show decimals with at most 2 places. `{{ scale(n) }}` checks the unit word after it. Android's ICU regex rejects a quantified lookahead that the JVM accepts, so check regex changes on the device. Tests: `FormatAmountTest`.
 - Ingredient amounts use Nunito SemiBold (`nunito()` in `Type.kt`, applied in `IngredientItem`, measured in `IngredientsList`); units and notes keep Playfair. Font licenses are in `licenses/fonts/`.
 - Recipe toolbar: "Add to meal plan" is an icon button after Share; `RecipeDetailsDropdown` hides that item when `onAddToMealPlan` is null.
+- Add to shopping: foods Tandoor marks On Hand (`TandoorFood.food_onhand`) start unchecked like `ignore_shopping` ones, dim to 60% instead of 20%, and get a sage "pantry" pill (`IngredientItem.labelSuffix`) and checkbox border. Recipes loaded from the Room cache carry no On Hand, so nothing gets the pill there.
 - Meal-plan dates: `parseTandoorDate()` takes the date as Tandoor wrote it (Tandoor sends its own timezone offset) and `toStartOfDayString()` sends midnight without an offset. Do not convert to UTC or the device timezone: an 18:00-07:00 dinner is the next day in UTC. Tests: `MealPlanDateUtilsTest`.
 
 ## Build and test

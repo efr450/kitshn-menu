@@ -1,12 +1,15 @@
 package de.kitshn.ui.dialog.recipe
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,8 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import de.kitshn.api.tandoor.model.TandoorIngredient
 import de.kitshn.api.tandoor.model.recipe.TandoorRecipe
 import de.kitshn.ui.component.model.ingredient.IngredientsList
@@ -55,7 +60,8 @@ class RecipeAddToShoppingDialogState(
         selectedIngredients.clear()
 
         ingredients.addAll(recipe.steps.flatMap { it.ingredients })
-        selectedIngredients.addAll(ingredients.filter { it.food?.ignore_shopping != true })
+        // Menu fork: pantry (On Hand) foods start unchecked too
+        selectedIngredients.addAll(ingredients.filter { it.food?.ignore_shopping != true && !it.isPantry() })
 
         this.recipe.value = recipe
         this.servings.value = servings
@@ -129,6 +135,8 @@ fun RecipeAddToShoppingDialog(
                                 .alpha(
                                     if(state.selectedIngredients.contains(it)) {
                                         1f
+                                    } else if(it.isPantry()) {
+                                        0.6f // Menu fork: dim less than an item unchecked by hand
                                     } else {
                                         0.2f
                                     }
@@ -141,8 +149,14 @@ fun RecipeAddToShoppingDialog(
                                     }
                                 }
                         },
+                        itemLabelSuffix = { if(it.isPantry()) PantryPill() },
                         itemTrailingContent = {
                             Checkbox(
+                                colors = if(it.isPantry()) {
+                                    CheckboxDefaults.colors(uncheckedColor = PantrySage)
+                                } else {
+                                    CheckboxDefaults.colors()
+                                },
                                 checked = state.selectedIngredients.contains(it),
                                 onCheckedChange = { value ->
                                     if(value) {
@@ -167,4 +181,24 @@ fun RecipeAddToShoppingDialog(
             }
         }
     }
+}
+
+// Menu fork: foods marked On Hand in Tandoor are probably stocked; they start unchecked and wear a pill
+private fun TandoorIngredient.isPantry() = food?.food_onhand == true
+
+private val PantrySage = Color(0xFF7FA38A)
+
+@Composable
+private fun PantryPill() {
+    Text(
+        text = "pantry",
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .border(1.dp, PantrySage, RoundedCornerShape(50))
+            .padding(horizontal = 7.dp),
+        color = Color(0xFF9CC4A6),
+        fontSize = 11.sp,
+        letterSpacing = 0.4.sp,
+        maxLines = 1
+    )
 }
