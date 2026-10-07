@@ -15,6 +15,7 @@ A fork of [kitshn](https://github.com/kitshn-app/kitshn) (Kotlin Multiplatform c
 - `kitshn.properties`: crash-report receiver and funding API blanked. `Acra.kt` skips the HTTP sender and `FundingBanner.kt` skips the banner when they're blank.
 - Launcher shortcuts (`androidApp/src/main/res/xml/shortcuts.xml`) target our app ID.
 - Meal-plan days: `isMealPlanOnDay()` / `TandoorMealPlan.isOnDay()` decide which days a plan is on, for both the meal-plan grid and Home's Today/Tomorrow. Bulk "move" keeps a plan's length.
+- Meal-plan list (`TandoorMealPlanRoute`): never sends `to_date`, because Tandoor 2.6's `to_date` filter compares the plan's end date and drops plans still running after the window. Plans starting after the window are cut client-side.
 - Meal-plan dates: `parseTandoorDate()` takes the date as Tandoor wrote it (Tandoor sends its own timezone offset) and `toStartOfDayString()` sends midnight without an offset. Do not convert to UTC or the device timezone: an 18:00-07:00 dinner is the next day in UTC. Tests: `MealPlanDateUtilsTest`.
 
 ## Build and test

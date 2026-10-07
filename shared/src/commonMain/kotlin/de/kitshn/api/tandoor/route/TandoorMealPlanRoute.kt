@@ -8,6 +8,7 @@ import de.kitshn.api.tandoor.model.TandoorPagedResponse
 import de.kitshn.api.tandoor.model.recipe.TandoorRecipeOverview
 import de.kitshn.api.tandoor.postObject
 import de.kitshn.json
+import de.kitshn.parseTandoorDate
 import de.kitshn.toStartOfDayString
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -74,7 +75,8 @@ open class TandoorMealPlanRoute(client: TandoorClient) : TandoorBaseRoute(client
 
         processPage(response.results)
 
-        return response
+        // Menu fork: see buildListExtraParams
+        return response.copy(results = response.results.startingBy(to))
     }
 
     suspend fun listAll(
@@ -93,7 +95,8 @@ open class TandoorMealPlanRoute(client: TandoorClient) : TandoorBaseRoute(client
             onPageReceived?.invoke(page) ?: false
         }
 
-        return response
+        // Menu fork: see buildListExtraParams
+        return response.copy(results = response.results.startingBy(to))
     }
 
     suspend fun retrieve(
@@ -118,11 +121,19 @@ open class TandoorMealPlanRoute(client: TandoorClient) : TandoorBaseRoute(client
             byUnicodePattern("yyyy-MM-dd")
         }
 
+        // Menu fork: Tandoor's to_date filter compares a plan's END date (to_date <= to), so
+        // plans still running after the window are dropped. Leave it off (Tandoor then uses
+        // today + 360 days) and cut plans starting after the window with startingBy().
         return buildList {
             from?.let { add("from_date" to dateFormat.format(it)) }
-            to?.let { add("to_date" to dateFormat.format(it)) }
             meal_type?.let { add("meal_type" to it.toString()) }
         }
+    }
+
+    // Menu fork: plans that start on or before `to`, i.e. overlap a window ending at `to`
+    private fun List<TandoorMealPlan>.startingBy(to: LocalDate?): List<TandoorMealPlan> {
+        if(to == null) return this
+        return filter { it.from_date.parseTandoorDate() <= to }
     }
 
     private fun processPage(page: List<TandoorMealPlan>) {
