@@ -295,8 +295,10 @@ fun Boolean.toTFString(): String {
 @OptIn(FormatStringsInDatetimeFormats::class)
 fun String.parseTandoorDate(): LocalDate {
     if(this.length > 14) {
-        // Meal-plan dates are UTC calendar days (#398, #423).
-        return Instant.parse(this).toLocalDateTime(TimeZone.UTC).date
+        // Tandoor sends datetimes in its own timezone (e.g. 2026-10-07T18:00:00-07:00);
+        // the date as written is the day Tandoor shows. Converting to UTC or the device's
+        // timezone can shift it a day (#337, #398, #423).
+        return LocalDate.parse(this.substring(0, 10))
     }
 
     // legacy for version < 1.15.18
@@ -308,9 +310,10 @@ fun String.parseIsoTime(): LocalDateTime {
 }
 
 fun LocalDate.toStartOfDayString(): String {
-    // Send UTC midnight so the stored day matches the picked day (#398, #423).
+    // No offset: Tandoor reads it as midnight in its own timezone, so the stored day
+    // is the picked day whatever the device's timezone (#337, #398, #423).
     return LocalDateTime(this, LocalTime(0, 0))
-        .format(LocalDateTime.Formats.ISO) + "Z"
+        .format(LocalDateTime.Formats.ISO)
 }
 
 fun Long.toLocalDate(
