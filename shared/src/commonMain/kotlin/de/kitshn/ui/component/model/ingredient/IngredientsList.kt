@@ -12,12 +12,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import de.kitshn.api.tandoor.model.TandoorFoodRecipe
 import de.kitshn.api.tandoor.model.TandoorIngredient
 import de.kitshn.ui.state.ErrorLoadingSuccessState
+import de.kitshn.ui.theme.nunito
 
 @Composable
 fun IngredientsList(
@@ -43,6 +46,8 @@ fun IngredientsList(
     var minUnitWidth by remember { mutableStateOf(0.dp) }
 
     val textMeasure = rememberTextMeasurer()
+    // Menu fork: measure amounts in the font IngredientItem draws them with
+    val amountStyle = TextStyle(fontFamily = nunito(), fontWeight = FontWeight.SemiBold)
     LaunchedEffect(list, list.size, factor) {
         minAmountWidth = 0.dp
         minUnitWidth = 0.dp
@@ -57,7 +62,8 @@ fun IngredientsList(
                             ingredient.formatAmount(
                                 amount,
                                 showFractionalValues
-                            )
+                            ),
+                            style = amountStyle
                         ).size.width.toDp()
                     }
                 if(widthDp > minAmountWidth) minAmountWidth = widthDp

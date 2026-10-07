@@ -6,6 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import kitshn.shared.generated.resources.Res
+import kitshn.shared.generated.resources.nunito
 import kitshn.shared.generated.resources.playfairdisplay_black
 import kitshn.shared.generated.resources.playfairdisplay_blackitalic
 import kitshn.shared.generated.resources.playfairdisplay_bold
@@ -34,6 +35,15 @@ fun playfairDisplay() = FontFamily(
     Font(Res.font.playfairdisplay_extrabolditalic, FontWeight.ExtraBold, FontStyle.Italic),
     Font(Res.font.playfairdisplay_black, FontWeight.Black),
     Font(Res.font.playfairdisplay_blackitalic, FontWeight.Black, FontStyle.Italic),
+)
+
+// Menu fork: ingredient amounts use Nunito, since Playfair's old-style numerals read poorly
+// at that size. It is a variable font (wght axis).
+@Composable
+fun nunito() = FontFamily(
+    Font(Res.font.nunito, FontWeight.Normal),
+    Font(Res.font.nunito, FontWeight.SemiBold),
+    Font(Res.font.nunito, FontWeight.Bold),
 )
 
 @Composable

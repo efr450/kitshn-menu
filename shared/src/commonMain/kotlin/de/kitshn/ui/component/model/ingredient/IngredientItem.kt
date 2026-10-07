@@ -24,6 +24,7 @@ import de.kitshn.api.tandoor.model.TandoorFoodRecipe
 import de.kitshn.api.tandoor.model.TandoorIngredient
 import de.kitshn.ui.modifier.loadingPlaceHolder
 import de.kitshn.ui.state.ErrorLoadingSuccessState
+import de.kitshn.ui.theme.nunito
 
 enum class IngredientItemPosition {
     TOP,
@@ -105,6 +106,8 @@ fun IngredientItem(
                 ) {
                     if(!ingredient.no_amount && amount > 0.0) Text(
                         text = ingredient.formatAmount(amount, fractional = showFractionalValues),
+                        fontFamily = nunito(),
+                        fontWeight = FontWeight.SemiBold,
                         textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
                     )
 
