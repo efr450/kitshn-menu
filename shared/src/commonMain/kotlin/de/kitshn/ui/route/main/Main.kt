@@ -1,6 +1,7 @@
 package de.kitshn.ui.route.main
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
@@ -24,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -93,6 +95,7 @@ fun RouteMain(p: RouteParameters) {
 
     val isOnline by p.vm.isOnline.collectAsState()
     val isOffline = !isOnline
+    val uriHandler = LocalUriHandler.current
 
     NavigationSuiteScaffold(
         navigationSuiteColors = NavigationSuiteDefaults.colors(
@@ -124,6 +127,15 @@ fun RouteMain(p: RouteParameters) {
                     }
                 )
             }
+
+            // Menu fork: "Claude" opens the Kitchen chat. The desktop running Tandoor
+            // serves port 8765 as a redirect to the current claude.ai session (Menu repo, kitchen/).
+            if(isOnline) item(
+                icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = "Claude") },
+                label = { Text(text = "Claude", maxLines = 1) },
+                selected = false,
+                onClick = { uriHandler.openUri(kitchenUrl(p.vm.tandoorClient!!.credentials.instanceUrl)) }
+            )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
@@ -132,6 +144,12 @@ fun RouteMain(p: RouteParameters) {
 
     TandoorServerVersionCompatibilityDialog(vm = p.vm)
     TandoorBetaInfoDialog(vm = p.vm)
+}
+
+// Menu fork: the Kitchen redirect on the Tandoor host, e.g. http://192.168.50.196 -> http://192.168.50.196:8765/
+internal fun kitchenUrl(instanceUrl: String): String {
+    val host = instanceUrl.substringAfter("://").substringBefore("/").substringBefore(":")
+    return "http://$host:8765/"
 }
 
 // alternate saving method because multiple rememberNavController() cause problem at jvmMain and iosMain
