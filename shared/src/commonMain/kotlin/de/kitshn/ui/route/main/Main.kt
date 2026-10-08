@@ -25,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -95,7 +94,8 @@ fun RouteMain(p: RouteParameters) {
 
     val isOnline by p.vm.isOnline.collectAsState()
     val isOffline = !isOnline
-    val uriHandler = LocalUriHandler.current
+    val openKitchen = rememberKitchenOpener()
+    val instanceUrl = p.vm.tandoorClient?.credentials?.instanceUrl
 
     NavigationSuiteScaffold(
         navigationSuiteColors = NavigationSuiteDefaults.colors(
@@ -128,13 +128,13 @@ fun RouteMain(p: RouteParameters) {
                 )
             }
 
-            // Menu fork: "Claude" opens the Kitchen chat. The desktop running Tandoor
-            // serves port 8765 as a redirect to the current claude.ai session (Menu repo, kitchen/).
-            if(isOnline) item(
+            // Menu fork: "Claude" opens a fresh Kitchen chat. The desktop running Tandoor
+            // serves port 8765 as a redirect to claude.ai/code/new (Menu repo, kitchen/).
+            if(isOnline && instanceUrl != null) item(
                 icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = "Claude") },
                 label = { Text(text = "Claude", maxLines = 1) },
                 selected = false,
-                onClick = { uriHandler.openUri(kitchenUrl(p.vm.tandoorClient!!.credentials.instanceUrl)) }
+                onClick = { openKitchen(kitchenUrl(instanceUrl)) }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -151,6 +151,10 @@ internal fun kitchenUrl(instanceUrl: String): String {
     val host = instanceUrl.substringAfter("://").substringBefore("/").substringBefore(":")
     return "http://$host:8765/"
 }
+
+// Menu fork: opens the Kitchen URL in the browser; Android reuses one browser tab for it.
+@Composable
+expect fun rememberKitchenOpener(): (String) -> Unit
 
 // alternate saving method because multiple rememberNavController() cause problem at jvmMain and iosMain
 @Composable
