@@ -1105,12 +1105,14 @@ fun ViewRecipeDetails(
         RecipeAddToShoppingDialog(
             state = recipeAddToShoppingDialogState,
             showFractionalValues = ingredientsShowFractionalValues.value,
-            onSubmit = { ingredients, servings ->
+            enableHave = true, // Menu fork
+            onSubmit = { ingredients, servings, buyAmounts ->
                 coroutineScope.launch {
                     recipeAddToShoppingRequestState.wrapRequest {
                         recipe?.addToShopping(
                             entries = ingredients,
-                            servings = servings
+                            servings = servings,
+                            buyAmounts = buyAmounts
                         )
                     }
                 }

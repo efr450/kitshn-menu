@@ -30,6 +30,10 @@ fun IngredientsList(
     itemTrailingContent: @Composable (ingredient: TandoorIngredient) -> Unit = {},
     // Menu fork: see IngredientItem.labelSuffix
     itemLabelSuffix: @Composable (ingredient: TandoorIngredient) -> Unit = {},
+    // Menu fork: see IngredientItem.amountOverride / onAmountClick / belowNote
+    itemAmountOverride: (ingredient: TandoorIngredient) -> Double? = { null },
+    itemOnAmountClick: ((ingredient: TandoorIngredient) -> Unit)? = null,
+    itemBelowNote: (ingredient: TandoorIngredient) -> (@Composable () -> Unit)? = { null },
 
     factor: Double = 1.0,
     loadingState: ErrorLoadingSuccessState = ErrorLoadingSuccessState.SUCCESS,
@@ -122,6 +126,9 @@ fun IngredientsList(
                         modifier = itemModifier(ingredient),
                         trailingContent = { itemTrailingContent(ingredient) },
                         labelSuffix = { itemLabelSuffix(ingredient) },
+                        amountOverride = itemAmountOverride(ingredient),
+                        onAmountClick = itemOnAmountClick?.let { onClick -> { onClick(ingredient) } },
+                        belowNote = itemBelowNote(ingredient),
 
                         ingredient = ingredient,
                         servingsFactor = factor,

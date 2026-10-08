@@ -1,5 +1,7 @@
 package de.kitshn.ui.component.model.ingredient
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -46,6 +48,11 @@ fun IngredientItem(
     trailingContent: @Composable () -> Unit = {},
     // Menu fork: drawn right after the food name (the shopping dialog's pantry pill)
     labelSuffix: @Composable () -> Unit = {},
+    // Menu fork: the shopping dialog's "have" field. amountOverride is the scaled amount to buy (the full
+    // amount is struck through above it), onAmountClick makes the amount tappable, belowNote sits under the note.
+    amountOverride: Double? = null,
+    onAmountClick: (() -> Unit)? = null,
+    belowNote: (@Composable () -> Unit)? = null,
 
     colors: ListItemColors = ListItemDefaults.colors(),
 
@@ -108,12 +115,24 @@ fun IngredientItem(
                     Modifier
                         .widthIn(minAmountWidth)
                 ) {
-                    if(!ingredient.no_amount && amount > 0.0) Text(
-                        text = ingredient.formatAmount(amount, fractional = showFractionalValues),
-                        fontFamily = nunito(),
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
-                    )
+                    if(!ingredient.no_amount && amount > 0.0) Column(
+                        if(onAmountClick != null) Modifier.clickable(onClick = onAmountClick) else Modifier
+                    ) {
+                        val shown = amountOverride ?: amount
+                        if(shown != amount) Text(
+                            text = ingredient.formatAmount(amount, fractional = showFractionalValues),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textDecoration = TextDecoration.LineThrough
+                        )
+                        Text(
+                            text = ingredient.formatAmount(shown, fractional = showFractionalValues),
+                            fontFamily = nunito(),
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = if(showTickedOff) TextDecoration.LineThrough
+                            else if(onAmountClick != null) TextDecoration.Underline else null
+                        )
+                    }
 
                     Spacer(Modifier.width(8.dp))
                 }
@@ -123,7 +142,7 @@ fun IngredientItem(
                         .widthIn(minUnitWidth)
                 ) {
                     if(!ingredient.no_amount && ingredient.unit != null) Text(
-                        text = ingredient.getUnitLabel(amount),
+                        text = ingredient.getUnitLabel(amountOverride ?: amount),
                         textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
                     )
 
@@ -137,7 +156,7 @@ fun IngredientItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 modifier = Modifier.weight(1f, fill = false),
-                text = ingredient.getLabel(amount),
+                text = ingredient.getLabel(amountOverride ?: amount),
                 color = when(foodHasRecipe) {
                     true ->MaterialTheme.colorScheme.primary
                     false -> Color.Unspecified
@@ -154,13 +173,16 @@ fun IngredientItem(
             labelSuffix()
             }
         },
-        supportingContent = if((ingredient?.note ?: "").isNotBlank()) {
+        supportingContent = if((ingredient?.note ?: "").isNotBlank() || belowNote != null) {
             {
-                Text(
-                    // Menu fork: measures in the note scale with servings too
-                    text = scaleNoteAmounts(ingredient?.note ?: "", servingsFactor, showFractionalValues),
-                    textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
-                )
+                Column {
+                    if((ingredient?.note ?: "").isNotBlank()) Text(
+                        // Menu fork: measures in the note scale with servings too
+                        text = scaleNoteAmounts(ingredient?.note ?: "", servingsFactor, showFractionalValues),
+                        textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
+                    )
+                    belowNote?.invoke()
+                }
             }
         } else null
     )

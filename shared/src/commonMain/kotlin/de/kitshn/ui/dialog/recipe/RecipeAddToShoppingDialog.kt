@@ -1,6 +1,19 @@
 package de.kitshn.ui.dialog.recipe
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import kotlin.math.floor
+import kotlin.math.round
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,15 +74,95 @@ class RecipeAddToShoppingDialogState(
     var optionalIngredientIds: Set<Int> = emptySet()
         private set
 
+    // Menu fork: how much of each ingredient you already have (ingredient id -> amount at the dialog's
+    // servings); only the shortfall is added. editingHave is the row whose "I have" editor is open.
+    val have = mutableStateMapOf<Int, Double>()
+    var editingHave by mutableStateOf<Int?>(null)
+
+    // The checkbox follows "have" only when a row changes state, so a hand-made uncheck sticks:
+    // fullyHad = rows we unchecked because you have all of it, hadSome = rows with part of it,
+    // initiallyChecked = how rows started, restored when a fully-had row drops back to nothing.
+    private val fullyHad = mutableSetOf<Int>()
+    private val hadSome = mutableSetOf<Int>()
+    private val initiallyChecked = mutableSetOf<Int>()
+
+    fun setHave(ingredient: TandoorIngredient, value: Double, servingsFactor: Double, applySelection: Boolean = true) {
+        val v = value.coerceIn(0.0, ingredient.amount * servingsFactor)
+        if(v <= 0.0) have.remove(ingredient.id) else have[ingredient.id] = v
+        if(applySelection) applySelection(ingredient, servingsFactor)
+    }
+
+    // all of it unchecks the row; part of it checks it; back to none restores how it started
+    fun applySelection(ingredient: TandoorIngredient, servingsFactor: Double) {
+        val id = ingredient.id
+        val need = ingredient.amount * servingsFactor
+        val v = have[id] ?: 0.0
+        val wasFull = id in fullyHad
+        val wasSome = id in hadSome
+        when {
+            need > 0.0 && v >= need -> {
+                fullyHad.add(id); hadSome.remove(id)
+                if(!wasFull) selectedIngredients.remove(ingredient)
+            }
+            v > 0.0 -> {
+                hadSome.add(id); fullyHad.remove(id)
+                if((wasFull || !wasSome) && ingredient !in selectedIngredients) selectedIngredients.add(ingredient)
+            }
+            else -> {
+                hadSome.remove(id)
+                if(fullyHad.remove(id) && id in initiallyChecked && ingredient !in selectedIngredients)
+                    selectedIngredients.add(ingredient)
+            }
+        }
+    }
+
+    // servings changed: what you have stays (not clamped, so going back restores it), the need moves
+    fun reconcile(servingsFactor: Double) {
+        for(id in have.keys.toList()) {
+            ingredients.firstOrNull { it.id == id }?.let { applySelection(it, servingsFactor) }
+        }
+    }
+
+    fun closeHaveEditor(servingsFactor: Double) {
+        val id = editingHave ?: return
+        ingredients.firstOrNull { it.id == id }?.let { applySelection(it, servingsFactor) }
+        editingHave = null
+    }
+
+    // checking a row you have all of by hand means "buy it anyway": forget the have
+    fun toggle(ingredient: TandoorIngredient, checked: Boolean, servingsFactor: Double) {
+        if(checked) {
+            if(fullyHad.remove(ingredient.id) || buy(ingredient, servingsFactor) <= 0.0) {
+                have.remove(ingredient.id)
+                hadSome.remove(ingredient.id)
+            }
+            if(ingredient !in selectedIngredients) selectedIngredients.add(ingredient)
+        } else {
+            selectedIngredients.remove(ingredient)
+        }
+        // the hand-set checkbox wins: record the current have state so closing the editor won't redo it
+        val v = have[ingredient.id] ?: 0.0
+        val need = ingredient.amount * servingsFactor
+        fullyHad.remove(ingredient.id)
+        hadSome.remove(ingredient.id)
+        if(need > 0.0 && v >= need) fullyHad.add(ingredient.id) else if(v > 0.0) hadSome.add(ingredient.id)
+    }
+
     fun open(recipe: TandoorRecipe, servings: Double) {
         ingredients.clear()
         selectedIngredients.clear()
+        have.clear()
+        fullyHad.clear()
+        hadSome.clear()
+        initiallyChecked.clear()
+        editingHave = null
 
         ingredients.addAll(recipe.steps.flatMap { it.ingredients })
         optionalIngredientIds = recipe.steps.filter { it.optionalName() != null }
             .flatMap { step -> step.ingredients.map { it.id } }.toSet()
         // Menu fork: pantry (On Hand) foods start unchecked too
         selectedIngredients.addAll(ingredients.filter { it.food?.ignore_shopping != true && !it.isPantry() })
+        initiallyChecked.addAll(selectedIngredients.map { it.id })
 
         this.recipe.value = recipe
         this.servings.value = servings
@@ -86,15 +179,16 @@ class RecipeAddToShoppingDialogState(
 fun RecipeAddToShoppingDialog(
     state: RecipeAddToShoppingDialogState,
     showFractionalValues: Boolean,
-    onSubmit: (ingredients: List<TandoorIngredient>, servings: Double) -> Unit
+    // Menu fork: offer the "I have" editor; onSubmit then gets the amount to buy per ingredient id
+    // for rows with a "have" set. Only for callers that send amounts (not the meal plan's id-only path).
+    enableHave: Boolean = false,
+    onSubmit: (ingredients: List<TandoorIngredient>, servings: Double, buyAmounts: Map<Int, Double>) -> Unit
 ) {
     if(!state.shown.value) return
 
-    var servingsFactor by remember { mutableStateOf(1.0) }
-    LaunchedEffect(state.servings.value) {
-        servingsFactor =
-            state.servings.value / (state.recipe.value?.servings ?: 1).toDouble()
-    }
+    val servingsFactor = state.servings.value / (state.recipe.value?.servings ?: 1).toDouble()
+    // Menu fork: re-check "have" rows against the new need
+    LaunchedEffect(servingsFactor) { state.reconcile(servingsFactor) }
 
     AdaptiveFullscreenDialog(
         onDismiss = { state.dismiss() },
@@ -106,8 +200,15 @@ fun RecipeAddToShoppingDialog(
         actions = {
             Button(
                 onClick = {
+                    state.closeHaveEditor(servingsFactor)
+                    // never add a row with nothing left to buy
+                    val selected = state.selectedIngredients
+                        .filter { it.id !in state.have || state.buy(it, servingsFactor) > 0.0 }
+                    val buyAmounts = selected.filter { it.id in state.have }
+                        .associate { it.id to state.buy(it, servingsFactor) }
+                    val servings = state.servings.value
                     state.dismiss()
-                    onSubmit(state.selectedIngredients, state.servings.value)
+                    onSubmit(selected, servings, buyAmounts)
                 }
             ) {
                 Text(
@@ -149,13 +250,37 @@ fun RecipeAddToShoppingDialog(
                                         0.2f
                                     }
                                 )
-                                .clickable {
-                                    if(state.selectedIngredients.contains(it)) {
-                                        state.selectedIngredients.remove(it)
-                                    } else {
-                                        state.selectedIngredients.add(it)
-                                    }
+                                .clickable { state.toggle(it, !state.selectedIngredients.contains(it), servingsFactor) }
+                        },
+                        itemAmountOverride = { if(it.id in state.have) state.buy(it, servingsFactor) else null },
+                        itemOnAmountClick = if(enableHave) { ingredient ->
+                            val reopen = state.editingHave != ingredient.id
+                            state.closeHaveEditor(servingsFactor)
+                            if(reopen) state.editingHave = ingredient.id
+                        } else null,
+                        itemBelowNote = { ingredient ->
+                            val had = state.have[ingredient.id]
+                            if(state.editingHave == ingredient.id) {
+                                {
+                                    HaveEditor(
+                                        ingredient = ingredient,
+                                        need = ingredient.amount * servingsFactor,
+                                        have = had ?: 0.0,
+                                        onSet = { value, apply -> state.setHave(ingredient, value, servingsFactor, apply) },
+                                        onDone = { state.closeHaveEditor(servingsFactor) }
+                                    )
                                 }
+                            } else if(had != null) {
+                                {
+                                    val unit = ingredient.getUnitLabel(had)
+                                    Text(
+                                        text = "have " + ingredient.formatAmount(had, fractional = showFractionalValues) +
+                                                (if(unit.isBlank()) "" else " $unit"),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            } else null
                         },
                         itemLabelSuffix = {
                             // Menu fork: an optional pantry item shows both; pantry decides the checkbox
@@ -170,13 +295,7 @@ fun RecipeAddToShoppingDialog(
                                     CheckboxDefaults.colors()
                                 },
                                 checked = state.selectedIngredients.contains(it),
-                                onCheckedChange = { value ->
-                                    if(value) {
-                                        state.selectedIngredients.add(it)
-                                    } else {
-                                        state.selectedIngredients.remove(it)
-                                    }
-                                }
+                                onCheckedChange = { value -> state.toggle(it, value, servingsFactor) }
                             )
                         },
 
@@ -192,6 +311,70 @@ fun RecipeAddToShoppingDialog(
                 }
             }
         }
+    }
+}
+
+// Menu fork: what's left to buy after what you have, at the dialog's servings
+fun RecipeAddToShoppingDialogState.buy(ingredient: TandoorIngredient, servingsFactor: Double): Double =
+    (ingredient.amount * servingsFactor - (have[ingredient.id] ?: 0.0)).coerceAtLeast(0.0)
+
+// Menu fork: a plain number for the text field (formatAmount groups thousands: "1,500")
+private fun plainAmount(value: Double): String {
+    val r = round(value * 100) / 100
+    return if(r == floor(r)) r.toLong().toString() else r.toString()
+}
+
+// Menu fork: "I have [__] unit" with none / half / all-of-it shortcuts, under the row's note
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HaveEditor(
+    ingredient: TandoorIngredient,
+    need: Double,
+    have: Double,
+    // typing only records the amount; the row's checkbox follows on done (applySelection = true)
+    onSet: (value: Double, applySelection: Boolean) -> Unit,
+    onDone: () -> Unit
+) {
+    var text by remember(ingredient.id) {
+        mutableStateOf(if(have > 0.0) plainAmount(have) else "")
+    }
+    fun set(value: Double) {
+        text = if(value > 0.0) plainAmount(value) else ""
+        onSet(value, true)
+    }
+
+    val half = when {
+        ingredient.unit?.isVolume() == true -> need / 2
+        ingredient.unit?.name == "g" -> round(need / 2)
+        else -> floor(need / 2)
+    }
+
+    FlowRow(
+        modifier = Modifier.padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("I have", style = MaterialTheme.typography.labelLarge)
+        OutlinedTextField(
+            modifier = Modifier.width(96.dp),
+            value = text,
+            onValueChange = { value ->
+                val parsed = value.replace(',', '.').toDoubleOrNull()
+                // more than the recipe needs: keep (and show) the full amount
+                text = if(parsed != null && parsed > need) plainAmount(need) else value
+                if(parsed != null) onSet(parsed.coerceAtMost(need), false) else if(value.isBlank()) onSet(0.0, false)
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onDone() })
+        )
+        val unit = ingredient.getUnitLabel(need)
+        if(unit.isNotBlank()) Text(unit, style = MaterialTheme.typography.labelLarge)
+        SuggestionChip(onClick = { set(0.0) }, label = { Text("none") })
+        if(half > 0.0) SuggestionChip(onClick = { set(half) }, label = { Text("half") })
+        SuggestionChip(onClick = { set(need); onDone() }, label = { Text("all of it") })
+        SuggestionChip(onClick = onDone, label = { Text("done") })
     }
 }
 

@@ -159,7 +159,9 @@ class TandoorRecipe(
 
     suspend fun addToShopping(
         entries: List<TandoorIngredient>,
-        servings: Double
+        servings: Double,
+        // Menu fork: amount to buy per ingredient id (what's left after what you have), overrides the scaled amount
+        buyAmounts: Map<Int, Double> = emptyMap()
     ) {
         if(client == null) return
 
@@ -177,7 +179,7 @@ class TandoorRecipe(
                 put("entries", buildJsonArray {
                     entries.forEach {
                         add(buildJsonObject {
-                            put("amount", factor * it.amount)
+                            put("amount", buyAmounts[it.id] ?: (factor * it.amount))
                             put("unit_id", it.unit?.id)
                             put("food_id", it.food?.id)
                             put("ingredient_id", it.id)

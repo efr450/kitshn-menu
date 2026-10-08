@@ -506,7 +506,7 @@ fun MealPlanCreationAndEditDialog(
     RecipeAddToShoppingDialog(
         state = recipeAddToShoppingDialogState,
         showFractionalValues = showFractionalValues,
-        onSubmit = { ingredients, mServings ->
+        onSubmit = { ingredients, mServings, _ ->
             coroutineScope.launch {
                 requestRecipeAddToShoppingState.wrapRequest {
                     recipeAddToShoppingDialogRecipe?.shopping(
