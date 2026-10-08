@@ -173,6 +173,11 @@ fun ShoppingListEntryListItem(
                     )
                 }
         )
+        // Menu fork: unmeasured amounts ("some parmesan") are stored as 0 with no unit; say so
+        // instead of showing no amount at all.
+        val unmeasured = entries.filter { it.amount == 0.0 && it.unit == null }
+        if(unmeasured.isNotEmpty())
+            amountChips.add(Pair("some", unmeasured.all { it.checked }))
 
         mealplans.clear()
         mealplans.addAll(
@@ -261,7 +266,7 @@ fun ShoppingListEntryListItem(
         headlineContent = {
             if (enlarge) {
                 Text(
-                    text = if(usePluralName) food.plural_name ?: food.name else food.name,
+                    text = if(usePluralName) food.plural_name?.ifBlank { null } ?: food.name else food.name,
                     style = Typography().headlineMedium,
                     fontFamily = playfairDisplay(),
                     textDecoration = if(allChecked) {
@@ -273,7 +278,7 @@ fun ShoppingListEntryListItem(
             } else {
                 Text(
                     text = if(usePluralName)
-                        food.plural_name ?: food.name
+                        food.plural_name?.ifBlank { null } ?: food.name
                     else
                         food.name,
                     textDecoration = if(allChecked) {

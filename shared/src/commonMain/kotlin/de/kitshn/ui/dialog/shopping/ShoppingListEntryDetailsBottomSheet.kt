@@ -166,7 +166,7 @@ fun ShoppingListEntryDetailsBottomSheet(
             title = {
                 Text(
                     text = if(usePluralName)
-                        food.plural_name ?: food.name
+                        food.plural_name?.ifBlank { null } ?: food.name
                     else
                         food.name
                 )
