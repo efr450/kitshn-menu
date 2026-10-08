@@ -128,8 +128,9 @@ fun RouteMain(p: RouteParameters) {
                 )
             }
 
-            // Menu fork: "Claude" opens a fresh Kitchen chat. The desktop running Tandoor
-            // serves port 8765 as a redirect to claude.ai/code/new (Menu repo, kitchen/).
+            // Menu fork: "Claude" opens a fresh Kitchen chat, in the Claude app on Android. The
+            // fallback: the desktop running Tandoor serves port 8765 as a redirect to
+            // claude.ai/code/new (Menu repo, kitchen/).
             if(isOnline && instanceUrl != null) item(
                 icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = "Claude") },
                 label = { Text(text = "Claude", maxLines = 1) },
@@ -152,7 +153,8 @@ internal fun kitchenUrl(instanceUrl: String): String {
     return "http://$host:8765/"
 }
 
-// Menu fork: opens the Kitchen URL in the browser; Android reuses one browser tab for it.
+// Menu fork: opens a Kitchen chat. Android tries the Claude app first and falls back to this
+// URL in the browser, reusing one tab for it.
 @Composable
 expect fun rememberKitchenOpener(): (String) -> Unit
 
