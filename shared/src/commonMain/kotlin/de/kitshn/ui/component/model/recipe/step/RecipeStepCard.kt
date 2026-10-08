@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,8 @@ fun RecipeStepCard(
     step: TandoorStep? = null,
     stepIndex: Int = 0,
     hideIngredients: Boolean = false,
+    // Menu fork: show "Optional: …" steps collapsed until tapped (recipe screen only, not the editor)
+    collapseOptional: Boolean = false,
     servingsFactor: Double,
     loadingState: ErrorLoadingSuccessState = ErrorLoadingSuccessState.SUCCESS,
     appendAction: @Composable () -> Unit = {},
@@ -70,15 +73,31 @@ fun RecipeStepCard(
                 (!hideIngredients)
     }
 
+    // Menu fork: optional steps (see OptionalStep.kt)
+    val optionalName = step?.optionalName()
+    val collapsible = collapseOptional && optionalName != null
+    var expanded by rememberSaveable(step?.id) { mutableStateOf(false) }
+
     Card(
         modifier = modifier,
         interactionSource = interactionSource,
         colors = colors,
         onClick = { }
     ) {
+        if(collapsible && !expanded && optionalName != null && step != null) {
+            OptionalStepHeader(
+                modifier = Modifier.fillMaxWidth(),
+                name = optionalName,
+                ingredientCount = step.ingredients.count { !it.is_header },
+                expanded = false,
+                onClick = { expanded = true }
+            )
+            return@Card
+        }
+
         @Composable
         fun Instructions() {
-            val stepName = (step?.name ?: "").ifBlank {
+            val stepName = optionalName ?: (step?.name ?: "").ifBlank {
                 stringResource(
                     Res.string.common_step,
                     stepIndex + 1
@@ -90,7 +109,13 @@ fun RecipeStepCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Text(
+                if(optionalName != null) OptionalStepHeader(
+                    modifier = Modifier.weight(1f, false),
+                    name = optionalName,
+                    ingredientCount = null,
+                    expanded = true,
+                    onClick = if(collapsible) ({ expanded = false }) else null
+                ) else Text(
                     modifier = Modifier
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
                         .loadingPlaceHolder(loadingState)

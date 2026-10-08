@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import de.kitshn.api.tandoor.model.TandoorIngredient
 import de.kitshn.api.tandoor.model.recipe.TandoorRecipe
 import de.kitshn.ui.component.model.ingredient.IngredientsList
+import de.kitshn.ui.component.model.recipe.step.OptionalBadge
+import de.kitshn.ui.component.model.recipe.step.optionalName
 import de.kitshn.ui.component.model.servings.ServingsSelector
 import de.kitshn.ui.dialog.AdaptiveFullscreenDialog
 import kitshn.shared.generated.resources.Res
@@ -55,11 +57,17 @@ class RecipeAddToShoppingDialogState(
     val ingredients = mutableStateListOf<TandoorIngredient>()
     val selectedIngredients = mutableStateListOf<TandoorIngredient>()
 
+    // Menu fork: ingredients of "Optional: …" steps; still checked by default, marked with a badge
+    var optionalIngredientIds: Set<Int> = emptySet()
+        private set
+
     fun open(recipe: TandoorRecipe, servings: Double) {
         ingredients.clear()
         selectedIngredients.clear()
 
         ingredients.addAll(recipe.steps.flatMap { it.ingredients })
+        optionalIngredientIds = recipe.steps.filter { it.optionalName() != null }
+            .flatMap { step -> step.ingredients.map { it.id } }.toSet()
         // Menu fork: pantry (On Hand) foods start unchecked too
         selectedIngredients.addAll(ingredients.filter { it.food?.ignore_shopping != true && !it.isPantry() })
 
@@ -149,7 +157,11 @@ fun RecipeAddToShoppingDialog(
                                     }
                                 }
                         },
-                        itemLabelSuffix = { if(it.isPantry()) PantryPill() },
+                        itemLabelSuffix = {
+                            // Menu fork: an optional pantry item shows both; pantry decides the checkbox
+                            if(it.id in state.optionalIngredientIds) OptionalBadge(Modifier.padding(start = 8.dp))
+                            if(it.isPantry()) PantryPill()
+                        },
                         itemTrailingContent = {
                             Checkbox(
                                 colors = if(it.isPantry()) {

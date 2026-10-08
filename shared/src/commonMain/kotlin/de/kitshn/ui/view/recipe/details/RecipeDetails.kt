@@ -975,6 +975,7 @@ fun ViewRecipeDetails(
                         step = step,
                         stepIndex = index,
                         hideIngredients = step.ingredients.size == sortedIngredientsList.size,
+                        collapseOptional = true, // Menu fork
                         servingsFactor = servingsFactor,
                         enableTickingOff = true,
                         showFractionalValues = ingredientsShowFractionalValues.value,
