@@ -1,0 +1,52 @@
+/* The phone shopping page: Workbench option A ("One list by aisle"), in the tablet's dark theme */
+:root {
+  color-scheme: dark;
+  --bg: #17140c; --row: #221e14; --fg: #ece2cc; --muted: #c9bea6; --gold: #e6c66a; --chip: #4a4128; --menu: #2c2618;
+  --ok-bg: #23361f; --ok: #9fd69a; --warn-bg: #3d2a12; --warn: #f0b866;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.4 system-ui, -apple-system, "Roboto", sans-serif;
+  padding: env(safe-area-inset-top, 0) 0 calc(24px + env(safe-area-inset-bottom, 0));
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+.top {
+  position: sticky; top: 0; z-index: 3; background: var(--bg); display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px 8px;
+}
+.top h1 { font: 400 1.4rem/1.2 Georgia, "Playfair Display", serif; margin: 0; flex: 1; }
+.pill { border: 0; cursor: pointer; font-size: 12px; border-radius: 99px; padding: 4px 10px; background: var(--ok-bg); color: var(--ok); white-space: nowrap; }
+.pill.off { background: var(--warn-bg); color: var(--warn); }
+.pill.busy { background: var(--chip); color: var(--fg); }
+.more { border: 0; background: none; cursor: pointer; font-size: 22px; line-height: 1; padding: 2px 6px; color: var(--muted); }
+.menu {
+  position: absolute; right: 12px; top: 46px; background: var(--menu); border-radius: 12px; padding: 4px;
+  box-shadow: 0 8px 24px #000a; display: flex; flex-direction: column; min-width: 220px;
+}
+.menu button { border: 0; background: none; text-align: left; cursor: pointer; padding: 10px 12px; border-radius: 8px; }
+.menu button:active, .menu button:hover { background: var(--chip); }
+.menu small { display: block; color: var(--muted); font-size: 12px; }
+.note { margin: 0 16px 8px; font-size: 13px; background: var(--menu); border-radius: 10px; padding: 8px 12px; }
+.note a { color: var(--gold); }
+main { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.aisle {
+  position: sticky; top: 50px; z-index: 2; background: var(--bg); display: flex; justify-content: space-between;
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); padding: 10px 4px 2px;
+}
+.aisle span:last-child { color: var(--muted); letter-spacing: 0; text-transform: none; }
+.row {
+  background: var(--row); border-radius: 12px; display: grid; grid-template-columns: 26px 1fr auto; gap: 2px 12px;
+  align-items: center; padding: 12px 14px; min-height: 56px; cursor: pointer; user-select: none; border: 0; width: 100%; text-align: left;
+}
+.box { width: 22px; height: 22px; border: 2px solid var(--muted); border-radius: 4px; display: grid; place-items: center; color: #2a2208; font-size: 15px; line-height: 1; }
+.row.done .box { background: var(--gold); border-color: var(--gold); }
+.food { font-size: 16px; min-width: 0; overflow-wrap: anywhere; }
+.buy { color: var(--gold); font-weight: 500; text-align: right; white-space: nowrap; }
+.buy.plain { color: var(--fg); font-weight: 400; }
+.sub { grid-column: 2 / 4; font-size: 12px; color: var(--muted); }
+.row.done .food, .row.done .buy, .row.done .sub { text-decoration: line-through; opacity: 0.45; }
+.row.queued { box-shadow: inset 4px 0 0 var(--warn); }
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

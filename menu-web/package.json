@@ -1,0 +1,10 @@
+{
+  "name": "menu-web",
+  "private": true,
+  "description": "Menu fork: the phone shopping page (see CLAUDE.md). No dependencies; tests use Node's built-in runner.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "sw-version": "node sw-version.js --write"
+  }
+}

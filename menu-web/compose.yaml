@@ -1,0 +1,14 @@
+# Menu fork: serves the phone shopping page (public/) on this PC. Tailscale maps it next to Tandoor:
+#   tailscale serve --bg --https=443 --set-path /shop http://127.0.0.1:8090
+# so the page is https://server.tail2d7086.ts.net/shop/ and shares Tandoor's sign-in.
+# Start or update: docker compose -f menu-web/compose.yaml up -d (files are mounted, so edits show at once).
+name: menu-web
+services:
+  shop:
+    image: nginx:1-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:80"
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro

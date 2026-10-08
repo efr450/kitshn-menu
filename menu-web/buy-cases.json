@@ -1,0 +1,816 @@
+{
+  "_about": "Cases the app's BuyAs.kt (BuyCasesTest) and the phone page's buy.js (test/buy.test.js) must both pass. Add a case here when either changes. A line is [amount, unit name, unit base_unit, checked].",
+  "units": {
+    "g": {
+      "name": "g",
+      "plural_name": "g",
+      "description": null,
+      "base_unit": "g"
+    },
+    "oz": {
+      "name": "oz",
+      "plural_name": null,
+      "description": null,
+      "base_unit": "ounce"
+    },
+    "cup": {
+      "name": "cup",
+      "plural_name": "cups",
+      "description": null,
+      "base_unit": "us_cup"
+    },
+    "half-gallon": {
+      "name": "half-gallon",
+      "plural_name": "half-gallons",
+      "description": "package",
+      "base_unit": null
+    },
+    "can": {
+      "name": "can",
+      "plural_name": "cans",
+      "description": "package",
+      "base_unit": null
+    }
+  },
+  "buyChip": [
+    {
+      "name": "package rounds up",
+      "lines": [
+        [
+          332,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "1 half-gallon",
+        "checked": false
+      }
+    },
+    {
+      "name": "package exactly full",
+      "lines": [
+        [
+          1992,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "1 half-gallon",
+        "checked": false
+      }
+    },
+    {
+      "name": "package plural",
+      "lines": [
+        [
+          1993,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "2 half-gallons",
+        "checked": false
+      }
+    },
+    {
+      "name": "package without plural keeps name",
+      "lines": [
+        [
+          2000,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "Bottle",
+        "pluralName": null,
+        "grams": 761
+      },
+      "expect": {
+        "label": "3 Bottle",
+        "checked": false
+      }
+    },
+    {
+      "name": "package wins over by weight",
+      "lines": [
+        [
+          300,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": {
+        "name": "box",
+        "pluralName": "boxes",
+        "grams": 454
+      },
+      "expect": {
+        "label": "1 box",
+        "checked": false
+      }
+    },
+    {
+      "name": "entries in the package unit count",
+      "lines": [
+        [
+          500,
+          "g",
+          "g",
+          false
+        ],
+        [
+          1,
+          "half-gallon",
+          null,
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "2 half-gallons",
+        "checked": false
+      }
+    },
+    {
+      "name": "1 lb ignores the last grams",
+      "lines": [
+        [
+          453.3,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1 lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "1½ lb",
+      "lines": [
+        [
+          680,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1½ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "¾ lb",
+      "lines": [
+        [
+          340,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "¾ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "¼ lb",
+      "lines": [
+        [
+          113,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "¼ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "2¼ lb",
+      "lines": [
+        [
+          1020,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "2¼ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "1¼ lb rounds up",
+      "lines": [
+        [
+          508,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1¼ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "ounces under a quarter pound",
+      "lines": [
+        [
+          50,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "2 oz",
+        "checked": false
+      }
+    },
+    {
+      "name": "4 oz",
+      "lines": [
+        [
+          100,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "4 oz",
+        "checked": false
+      }
+    },
+    {
+      "name": "no rule, no chip",
+      "lines": [
+        [
+          681,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": null,
+      "expect": null
+    },
+    {
+      "name": "grams and kg are summed",
+      "lines": [
+        [
+          400,
+          "g",
+          "g",
+          false
+        ],
+        [
+          0.28,
+          "kg",
+          "kg",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1½ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "pieces in the mix mean no chip",
+      "lines": [
+        [
+          400,
+          "g",
+          "g",
+          false
+        ],
+        [
+          2,
+          "piece",
+          null,
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": null
+    },
+    {
+      "name": "cups can't be counted in packages",
+      "lines": [
+        [
+          1,
+          "cup",
+          "us_cup",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": null
+    },
+    {
+      "name": "a bare count can't be weighed",
+      "lines": [
+        [
+          500,
+          "g",
+          "g",
+          false
+        ],
+        [
+          4,
+          null,
+          null,
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": null
+    },
+    {
+      "name": "unmeasured entries are ignored",
+      "lines": [
+        [
+          450,
+          "g",
+          "g",
+          false
+        ],
+        [
+          0,
+          null,
+          null,
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1 lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "only unmeasured entries",
+      "lines": [
+        [
+          0,
+          null,
+          null,
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": null
+    },
+    {
+      "name": "counts unchecked only",
+      "lines": [
+        [
+          450,
+          "g",
+          "g",
+          false
+        ],
+        [
+          450,
+          "g",
+          "g",
+          true
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1 lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "counts all once all checked",
+      "lines": [
+        [
+          450,
+          "g",
+          "g",
+          true
+        ],
+        [
+          450,
+          "g",
+          "g",
+          true
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "2 lb",
+        "checked": true
+      }
+    },
+    {
+      "name": "amounts already in lb and oz get no chip",
+      "lines": [
+        [
+          1,
+          "lb",
+          "pound",
+          false
+        ],
+        [
+          4,
+          "oz",
+          "ounce",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": null
+    },
+    {
+      "name": "lb and grams together are summed",
+      "lines": [
+        [
+          1,
+          "lb",
+          "pound",
+          false
+        ],
+        [
+          600,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "2½ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "a package applies to oz amounts",
+      "lines": [
+        [
+          8,
+          "oz",
+          "ounce",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "box",
+        "pluralName": "boxes",
+        "grams": 340
+      },
+      "expect": {
+        "label": "1 box",
+        "checked": false
+      }
+    },
+    {
+      "name": "package unit names match in any case",
+      "lines": [
+        [
+          1,
+          "Half-Gallon",
+          null,
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "1 half-gallon",
+        "checked": false
+      }
+    },
+    {
+      "name": "a blank base unit falls back to the unit name",
+      "lines": [
+        [
+          1,
+          "lb",
+          " ",
+          false
+        ],
+        [
+          227,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1½ lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "a blank plural keeps the name",
+      "lines": [
+        [
+          3000,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "jug",
+        "pluralName": "",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "2 jug",
+        "checked": false
+      }
+    },
+    {
+      "name": "a zero-gram package is ignored",
+      "lines": [
+        [
+          450,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": {
+        "name": "box",
+        "pluralName": "boxes",
+        "grams": 0
+      },
+      "expect": {
+        "label": "1 lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "just under the ounce limit",
+      "lines": [
+        [
+          101,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "4 oz",
+        "checked": false
+      }
+    },
+    {
+      "name": "just over the ounce limit",
+      "lines": [
+        [
+          102.1,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "¼ lb",
+        "checked": false
+      }
+    }
+  ],
+  "packagesFrom": [
+    {
+      "name": "package rows either way round; densities, generic rows and strays are ignored",
+      "conversions": [
+        [
+          1,
+          "Milk, whole",
+          1,
+          "half-gallon",
+          1992,
+          "g"
+        ],
+        [
+          2,
+          "Milk, coconut",
+          382,
+          "g",
+          1,
+          "can"
+        ],
+        [
+          3,
+          "Milk, whole",
+          1,
+          "cup",
+          249,
+          "g"
+        ],
+        [
+          4,
+          null,
+          1,
+          "can",
+          400,
+          "g"
+        ],
+        [
+          5,
+          "Pecan",
+          1,
+          "cup",
+          109,
+          "g"
+        ]
+      ],
+      "expect": {
+        "milk, whole": {
+          "name": "half-gallon",
+          "pluralName": "half-gallons",
+          "grams": 1992
+        },
+        "milk, coconut": {
+          "name": "can",
+          "pluralName": "cans",
+          "grams": 382
+        }
+      }
+    },
+    {
+      "name": "sizes convert from any weight",
+      "conversions": [
+        [
+          1,
+          "Tomato, canned",
+          1,
+          "can",
+          28,
+          "oz"
+        ]
+      ],
+      "expect": {
+        "tomato, canned": {
+          "name": "can",
+          "pluralName": "cans",
+          "grams": 793.786
+        }
+      }
+    },
+    {
+      "name": "oldest row wins and keys ignore case",
+      "conversions": [
+        [
+          9,
+          "Milk, Whole",
+          1,
+          "can",
+          400,
+          "g"
+        ],
+        [
+          2,
+          "Milk, whole",
+          1,
+          "half-gallon",
+          1992,
+          "g"
+        ]
+      ],
+      "expect": {
+        "milk, whole": {
+          "name": "half-gallon",
+          "pluralName": "half-gallons",
+          "grams": 1992
+        }
+      }
+    }
+  ],
+  "hasMarker": [
+    [
+      "package",
+      "package",
+      true
+    ],
+    [
+      "Sold by weight at the counter",
+      "by weight",
+      true
+    ],
+    [
+      "Fresh counter; by weight",
+      "by weight",
+      true
+    ],
+    [
+      "packaged goods",
+      "package",
+      false
+    ],
+    [
+      null,
+      "package",
+      false
+    ],
+    [
+      "PACKAGE",
+      "package",
+      true
+    ],
+    [
+      "Sold BY WEIGHT",
+      "by weight",
+      true
+    ],
+    [
+      "package_size",
+      "package",
+      false
+    ]
+  ]
+}

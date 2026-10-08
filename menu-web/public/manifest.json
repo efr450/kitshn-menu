@@ -1,0 +1,16 @@
+{
+  "name": "Menu shopping",
+  "short_name": "Shopping",
+  "description": "The Menu shopping list, by aisle, with buy amounts. Works offline.",
+  "start_url": "/shop/",
+  "scope": "/shop/",
+  "id": "/shop/",
+  "display": "standalone",
+  "background_color": "#17140c",
+  "theme_color": "#17140c",
+  "icons": [
+    { "src": "/shop/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/shop/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/shop/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

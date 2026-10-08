@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#17140c">
+  <title>Shopping</title>
+  <link rel="manifest" href="/shop/manifest.json">
+  <link rel="icon" href="/shop/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/shop/app.css">
+  <script type="module" src="/shop/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>Shopping</h1>
+    <button class="pill" id="pill" type="button" title="Refresh now">Loading…</button>
+    <button class="more" id="more" type="button" aria-label="More" aria-haspopup="menu" aria-expanded="false">⋯</button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <button type="button" role="menuitem" id="save">Save copy<small>a file on your phone that opens with no signal</small></button>
+      <button type="button" role="menuitem" id="refresh">Refresh now<small>pull the latest list from home</small></button>
+    </div>
+  </header>
+  <p class="note" id="note" hidden></p>
+  <main id="list"></main>
+</body>
+</html>
