@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import de.kitshn.BuyPackage
+import de.kitshn.buyPackageKey
 import de.kitshn.api.tandoor.model.TandoorFood
 import de.kitshn.api.tandoor.model.TandoorKeyword
 import de.kitshn.api.tandoor.model.TandoorKeywordOverview
@@ -49,5 +51,9 @@ class TandoorContainer(
     val unitByName = mutableStateMapOf<String, TandoorUnit?>()
 
     val shoppingListEntries = mutableStateMapOf<Int, TandoorShoppingListEntry>()
+
+    // Menu fork: food name (lowercase) -> package size, for the shopping list's "buy" chip (TandoorUnitConversionRoute)
+    val buyPackages = mutableStateMapOf<String, BuyPackage>()
+    fun buyPackageFor(foodName: String): BuyPackage? = buyPackages[buyPackageKey(foodName)]
 
 }

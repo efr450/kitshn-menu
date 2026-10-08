@@ -191,6 +191,7 @@ fun RouteShoppingMode(
                                             food = item.food,
                                             entries = item.entries,
                                             showFractionalValues = ingredientsShowFractionalValues.value,
+                                            buyPackage = vm.client?.container?.buyPackageFor(item.food.name), // Menu fork
                                             enlarge = enlargeShoppingMode.value,
                                             onClick = {
                                                 val allChecked = item.entries.all { e -> e.checked }

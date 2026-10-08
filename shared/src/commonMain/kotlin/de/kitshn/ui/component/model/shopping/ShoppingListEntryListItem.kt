@@ -1,6 +1,7 @@
 package de.kitshn.ui.component.model.shopping
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -43,13 +44,20 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import de.kitshn.TestTagRepository
 import de.kitshn.api.tandoor.model.TandoorMealPlan
 import de.kitshn.api.tandoor.model.shopping.TandoorShoppingList
 import de.kitshn.api.tandoor.model.shopping.TandoorShoppingListEntry
 import de.kitshn.api.tandoor.model.shopping.TandoorShoppingListEntryFood
+import de.kitshn.BY_WEIGHT_MARKER
+import de.kitshn.BuyChip
+import de.kitshn.BuyLine
+import de.kitshn.BuyPackage
+import de.kitshn.buyChip
 import de.kitshn.formatAmount
+import de.kitshn.hasMarker
 import de.kitshn.ui.modifier.loadingPlaceHolder
 import de.kitshn.ui.selectionMode.SelectionModeState
 import de.kitshn.ui.selectionMode.values.selectionModeListItemColors
@@ -134,6 +142,9 @@ fun ShoppingListEntryListItem(
 
     showFractionalValues: Boolean,
 
+    // Menu fork: the food's package size, for the "buy" chip (client.container.buyPackages)
+    buyPackage: BuyPackage? = null,
+
     enlarge: Boolean = false,
 
     onClick: (() -> Unit)? = null,
@@ -148,7 +159,10 @@ fun ShoppingListEntryListItem(
 
     var usePluralName by remember { mutableStateOf(false) }
 
-    LaunchedEffect(entries) {
+    // Menu fork: how you'd buy it (lb, or whole packages) beside the recipe amounts; rules in BuyAs.kt
+    var buyAs by remember { mutableStateOf<BuyChip?>(null) }
+
+    LaunchedEffect(entries, buyPackage) {
         amountChips.clear()
         amountChips.addAll(
             entries.filter { it.amount != 0.0 || it.unit != null }
@@ -178,6 +192,13 @@ fun ShoppingListEntryListItem(
         val unmeasured = entries.filter { it.amount == 0.0 && it.unit == null }
         if(unmeasured.isNotEmpty())
             amountChips.add(Pair("some", unmeasured.all { it.checked }))
+
+        // Menu fork
+        buyAs = buyChip(
+            lines = entries.map { BuyLine(it.amount, it.unit?.name, it.unit?.base_unit, it.checked) },
+            byWeight = hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER),
+            pkg = buyPackage
+        )
 
         mealplans.clear()
         mealplans.addAll(
@@ -333,6 +354,27 @@ fun ShoppingListEntryListItem(
                                 fontWeight = FontWeight.Medium
                             )
                         }
+                    }
+                }
+
+                // Menu fork: the "buy" chip, outlined in the accent color
+                buyAs?.let { (label, checked) ->
+                    Box(
+                        Modifier
+                            .padding(top = 8.dp, bottom = 8.dp)
+                            .height(32.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+                            .padding(start = 16.dp, end = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            textDecoration = if(checked) TextDecoration.LineThrough else TextDecoration.None,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = if(enlarge) 20.sp else TextUnit.Unspecified,
+                            lineHeight = if(enlarge) 20.sp else TextUnit.Unspecified,
+                            fontWeight = if(enlarge) FontWeight.SemiBold else FontWeight.Medium
+                        )
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package de.kitshn.model.route
 
+import co.touchlab.kermit.Logger
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -20,6 +21,7 @@ import de.kitshn.withLeadingZeros
 import kitshn.shared.generated.resources.Res
 import kitshn.shared.generated.resources.common_ungrouped
 import kitshn.shared.generated.resources.shopping_list_items_done
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -68,6 +70,7 @@ class ShoppingViewModel(
     val isRefreshing = repo.isSyncing
 
     init {
+        loadPackages()
         viewModelScope.launch {
             repo.observe().collectLatest { newEntries ->
                 entries.clear()
@@ -83,7 +86,25 @@ class ShoppingViewModel(
         }
     }
 
+    // Menu fork: package sizes for the "buy" chips, beside the list sync rather than in front of it.
+    // The cached copy shows at once (and offline); a fresh one loads when the screen opens and on
+    // pull-to-refresh. A failed load keeps the cached copy.
+    private fun loadPackages() {
+        viewModelScope.launch {
+            while(client == null) delay(50)
+            client?.unitConversion?.restorePackages()
+            try {
+                client?.unitConversion?.loadPackages()
+            } catch(e: CancellationException) {
+                throw e
+            } catch(e: Exception) {
+                Logger.e("ShoppingViewModel.kt", e)
+            }
+        }
+    }
+
     fun interactiveSync(force: Boolean = false) {
+        if(force) loadPackages()
         viewModelScope.launch {
             if (force) {
                 repo.reconcileInteractive()

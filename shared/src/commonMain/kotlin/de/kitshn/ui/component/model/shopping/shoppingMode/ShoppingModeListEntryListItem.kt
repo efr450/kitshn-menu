@@ -8,6 +8,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import de.kitshn.BuyPackage
 import de.kitshn.api.tandoor.model.shopping.TandoorShoppingListEntry
 import de.kitshn.api.tandoor.model.shopping.TandoorShoppingListEntryFood
 import de.kitshn.ui.component.model.shopping.ShoppingListEntryListItem
@@ -47,6 +48,8 @@ fun ShoppingModeListEntryListItem(
     entries: List<TandoorShoppingListEntry>,
 
     showFractionalValues: Boolean,
+    // Menu fork: see ShoppingListEntryListItem
+    buyPackage: BuyPackage? = null,
     enlarge: Boolean,
 
     onClick: () -> Unit,
@@ -70,6 +73,7 @@ fun ShoppingModeListEntryListItem(
                 food = food,
                 entries = entries,
                 showFractionalValues = showFractionalValues,
+                buyPackage = buyPackage,
                 enlarge = enlarge,
                 onClickExpand = onLongClick
             )

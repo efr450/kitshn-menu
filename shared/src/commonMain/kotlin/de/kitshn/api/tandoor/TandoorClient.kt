@@ -16,6 +16,7 @@ import de.kitshn.api.tandoor.route.TandoorShoppingRoute
 import de.kitshn.api.tandoor.route.TandoorSpaceRoute
 import de.kitshn.api.tandoor.route.TandoorStepRoute
 import de.kitshn.api.tandoor.route.TandoorSupermarketRoute
+import de.kitshn.api.tandoor.route.TandoorUnitConversionRoute
 import de.kitshn.api.tandoor.route.TandoorUnitRoute
 import de.kitshn.api.tandoor.route.TandoorUserPreferenceRoute
 import de.kitshn.api.tandoor.route.TandoorUserRoute
@@ -127,6 +128,7 @@ class TandoorClient(
     val step = TandoorStepRoute(this)
     val supermarket = TandoorSupermarketRoute(this)
     val unit = TandoorUnitRoute(this)
+    val unitConversion = TandoorUnitConversionRoute(this) // Menu fork
     val user = TandoorUserRoute(this)
     val userPreference = TandoorUserPreferenceRoute(this)
 

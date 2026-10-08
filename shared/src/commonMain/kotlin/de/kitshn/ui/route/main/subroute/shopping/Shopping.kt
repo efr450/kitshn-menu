@@ -336,6 +336,7 @@ fun RouteMainSubrouteShopping(
                                                         food = item.food,
                                                         entries = item.entries,
                                                         showFractionalValues = ingredientsShowFractionalValues.value,
+                                                        buyPackage = vm.client?.container?.buyPackageFor(item.food.name), // Menu fork
                                                         selectionState = selectionModeState,
                                                         onClick = {
                                                             shoppingListEntryDetailsBottomSheetState.open(
