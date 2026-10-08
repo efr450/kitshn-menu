@@ -8,24 +8,36 @@ import de.kitshn.api.tandoor.model.isVolumeUnitName
 
 private const val FRACTIONS = "½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞"
 
+// whitespace including the no-break space web-imported notes often carry ("1&nbsp;½")
+private const val WS = "[\\s\\u00A0]"
+
+// "⁄" is the Unicode fraction slash. "1-1/2" and "1-½" are mixed numbers, not ranges.
 private const val NUMBER =
-    "(?:\\d+\\s+\\d+/\\d+|\\d+/\\d+|\\d+(?:\\.\\d+)?(?: ?[$FRACTIONS])?|[$FRACTIONS])"
+    "(?:\\d+-\\d+[/⁄]\\d+|\\d+-[$FRACTIONS]|\\d+$WS+\\d+[/⁄]\\d+|\\d+[/⁄]\\d+|" +
+            "\\d+(?:\\.\\d+)?(?:$WS?[$FRACTIONS])?|[$FRACTIONS])"
 
 private const val UNIT =
     "fl\\.? ?oz|tablespoons?|teaspoons?|tbsps?|tsps?|cups?|pounds?|lbs?|ounces?|oz|grams?|kg|g|" +
             "ml|liters?|litres?|l|pinch(?:es)?|dash(?:es)?|pints?|quarts?|gallons?"
 
 private const val CONTAINER =
-    "cans?|bags?|packages?|packs?|jars?|box(?:es)?|bottles?|containers?|cartons?|tins?|blocks?"
+    "cans?|bags?|packages?|packets?|packs?|jars?|box(?:es)?|bottles?|containers?|cartons?|" +
+            "tins?|blocks?|envelopes?|tubs?|pouch(?:es)?|loaf|loaves"
 
 // number, optional range ("1–2", "½-¾", "1 to 2", "1 or 2"), then the unit. A hyphen between
 // number and unit ("1-inch", "20-ounce") marks a size, so only whitespace may sit there, and a
-// unit followed by a container ("15 oz can", "(15 oz) cans") is a package size. A number right
+// unit followed by a container ("15 oz can", "14.5 oz. can") is a package size. A number right
 // after digit-slash is a fraction's bottom, but "2 cups/500 ml" scales both sides.
 private val NOTE_AMOUNT = Regex(
-    "(?<![\\d.,\\-–—$FRACTIONS])(?<!\\d/)($NUMBER)" +
-            "(?:(\\s*[-–—]\\s*|\\s+(?:to|or)\\s+)($NUMBER))?" +
-            "(\\s*)($UNIT)(?![\\w\\-])(?!\\)?\\s*(?:$CONTAINER)\\b)",
+    "(?<![\\d.,\\-–—⁄$FRACTIONS])(?<!\\d[/⁄])($NUMBER)" +
+            "(?:($WS*[-–—]$WS*|$WS+(?:to|or)$WS+)($NUMBER))?" +
+            "($WS*)($UNIT)(?![\\w\\-])(?!\\.?\\)?$WS*(?:$CONTAINER)\\b)",
+    RegexOption.IGNORE_CASE
+)
+
+// parentheses next to a container hold a package size: "(15 oz/425 g) can", "can (15 oz)"
+private val PACKAGE_SIZE = Regex(
+    "\\([^)]*\\)$WS*(?:$CONTAINER)\\b|\\b(?:$CONTAINER)$WS*\\([^)]*\\)",
     RegexOption.IGNORE_CASE
 )
 
@@ -45,7 +57,13 @@ private val UNIT_PLURALS = mapOf(
 fun scaleNoteAmounts(note: String, factor: Double, fractional: Boolean): String {
     if(factor == 1.0) return note
 
+    val packageSizes = PACKAGE_SIZE.findAll(note).map { it.range }.toList()
+
     return NOTE_AMOUNT.replace(note) { match ->
+        if(packageSizes.any { it.first <= match.range.last && match.range.first <= it.last }) {
+            return@replace match.value
+        }
+
         val (low, separator, high, space, unit) = match.destructured
         val isVolume = isVolumeUnitName(unit) || unit.startsWith("fl", ignoreCase = true)
 
@@ -53,7 +71,8 @@ fun scaleNoteAmounts(note: String, factor: Double, fractional: Boolean): String 
         val highValue = if(high.isEmpty()) null else parseNoteNumber(high) ?: return@replace match.value
 
         // a no-break space keeps "4 ½" on one line when the note wraps
-        fun format(value: Double) = (value * factor).formatAmount(fractional, isVolume).replace(' ', ' ')
+        fun format(value: Double) =
+            (value * factor).formatAmount(fractional, isVolume).replace(' ', '\u00A0')
 
         buildString {
             append(format(lowValue))
@@ -68,7 +87,8 @@ fun scaleNoteAmounts(note: String, factor: Double, fractional: Boolean): String 
 }
 
 internal fun parseNoteNumber(text: String): Double? {
-    var rest = text.trim()
+    // "1-1/2" (mixed number) reads like "1 1/2"
+    var rest = text.replace('⁄', '/').replace('-', ' ').replace('\u00A0', ' ').trim()
     var value = 0.0
 
     rest.lastOrNull()?.let { FRACTION_VALUES[it] }?.let {
@@ -89,10 +109,15 @@ internal fun parseNoteNumber(text: String): Double? {
     return value
 }
 
-// Same rule as TandoorIngredient.getUnitLabel: plural above 1. Only touches lowercase words it knows.
+// Same rule as TandoorIngredient.getUnitLabel: plural above 1. Keeps the unit's capitalization.
 private fun pluralizeUnit(unit: String, amount: Double): String {
-    if(unit != unit.lowercase()) return unit
-    val singular = UNIT_PLURALS.entries.firstOrNull { it.key == unit || it.value == unit }?.key
+    val lower = unit.lowercase()
+    val singular = UNIT_PLURALS.entries.firstOrNull { it.key == lower || it.value == lower }?.key
         ?: return unit
-    return if(amount > 1) UNIT_PLURALS.getValue(singular) else singular
+    val word = if(amount > 1) UNIT_PLURALS.getValue(singular) else singular
+    return when {
+        unit.length > 1 && unit == unit.uppercase() -> word.uppercase()
+        unit.first().isUpperCase() -> word.replaceFirstChar { it.uppercase() }
+        else -> word
+    }
 }

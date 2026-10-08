@@ -7,11 +7,11 @@ import kotlin.test.assertEquals
 class NoteScalingTest {
 
     private fun scale(note: String, factor: Double = 1.5) =
-        scaleNoteAmounts(note, factor, fractional = true).replace(' ', ' ')
+        scaleNoteAmounts(note, factor, fractional = true).replace('\u00A0', ' ')
 
     @Test
     fun scaledMixedNumberDoesNotWrap() {
-        assertEquals("4 ½ cups diced", scaleNoteAmounts("3 cups diced", 1.5, fractional = true))
+        assertEquals("4\u00A0½ cups diced", scaleNoteAmounts("3 cups diced", 1.5, fractional = true))
     }
 
     @Test
@@ -50,6 +50,44 @@ class NoteScalingTest {
         assertEquals("1.88–2.25 lbs", scale("1¼–1½ lb"))
         assertEquals("3 to 4 ½ cups", scale("2 to 3 cups"))
         assertEquals("2 or 4 tbsp", scale("1 or 2 tbsp", 2.0))
+    }
+
+    @Test
+    fun hyphenatedMixedNumbers() {
+        assertEquals("3 tsp", scale("1-1/2 tsp", 2.0))
+        assertEquals("5 cups", scale("2-1/2 cups", 2.0))
+        assertEquals("3 cups", scale("1-½ cups", 2.0))
+        assertEquals("2–4 cups", scale("1–2 cups", 2.0))
+    }
+
+    @Test
+    fun noBreakSpaceAndFractionSlashInSource() {
+        assertEquals("3 cups", scale("1\u00A0½ cups", 2.0))
+        assertEquals("3 cups", scale("1\u00A01/2 cups", 2.0))
+        assertEquals("1 cup", scale("1⁄2 cup", 2.0))
+    }
+
+    @Test
+    fun packageSizesStay() {
+        assertEquals("2 (14.5 oz.) cans", scale("2 (14.5 oz.) cans", 2.0))
+        assertEquals("one 14.5 oz. can", scale("one 14.5 oz. can", 2.0))
+        assertEquals("2 lbs. bag", scale("2 lbs. bag", 2.0))
+        assertEquals("1 (15oz/425g) can", scale("1 (15oz/425g) can", 2.0))
+        assertEquals("1 (15 oz / 425 g) can", scale("1 (15 oz / 425 g) can", 2.0))
+        assertEquals("1 (0.25 oz) envelope yeast", scale("1 (0.25 oz) envelope yeast", 2.0))
+        assertEquals("1 oz packet", scale("1 oz packet", 2.0))
+        assertEquals("1 can (15 oz), drained", scale("1 can (15 oz), drained", 2.0))
+        assertEquals("2 cans (15 oz each)", scale("2 cans (15 oz each)", 2.0))
+        assertEquals("drained, about 3 cups", scale("drained, about 1 ½ cups", 2.0))
+        assertEquals("(about 3 cups)", scale("(about 1 ½ cups)", 2.0))
+        assertEquals("1 stick (1 cup) butter", scale("1 stick (½ cup) butter", 2.0))
+    }
+
+    @Test
+    fun capitalizedUnitsPluralize() {
+        assertEquals("1 Cup", scale("2 Cups", 0.5))
+        assertEquals("2 Cups", scale("1 Cup", 2.0))
+        assertEquals("2 CUPS", scale("1 CUP", 2.0))
     }
 
     @Test
