@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.kitshn.api.tandoor.model.TandoorFoodRecipe
 import de.kitshn.api.tandoor.model.TandoorIngredient
+import de.kitshn.scaleNoteAmounts
 import de.kitshn.ui.modifier.loadingPlaceHolder
 import de.kitshn.ui.state.ErrorLoadingSuccessState
 import de.kitshn.ui.theme.nunito
@@ -156,7 +157,8 @@ fun IngredientItem(
         supportingContent = if((ingredient?.note ?: "").isNotBlank()) {
             {
                 Text(
-                    text = ingredient?.note ?: "",
+                    // Menu fork: measures in the note scale with servings too
+                    text = scaleNoteAmounts(ingredient?.note ?: "", servingsFactor, showFractionalValues),
                     textDecoration = if(showTickedOff) TextDecoration.LineThrough else null
                 )
             }

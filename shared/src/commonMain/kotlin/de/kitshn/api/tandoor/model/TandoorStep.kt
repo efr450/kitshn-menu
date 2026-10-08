@@ -18,6 +18,7 @@ import de.kitshn.api.tandoor.patchObject
 import de.kitshn.api.tandoor.putObject
 import de.kitshn.formatAmount
 import de.kitshn.json
+import de.kitshn.scaleNoteAmounts
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -185,7 +186,9 @@ class TandoorStep(
                     }
                     .replace(Regex("\\{\\{ *ingredients\\[(\\d+)\\]\\.note *\\}\\}")) { // replaces ingredient note templates
                         val index = it.destructured.component1().toInt()
-                        ingredients.getOrNull(index)?.note ?: "Invalid ingredient template"
+                        // Menu fork: measures in the note scale with servings too
+                        ingredients.getOrNull(index)?.note?.let { note -> scaleNoteAmounts(note, scale, fractional) }
+                            ?: "Invalid ingredient template"
                     }
                     // Menu fork: the lookahead reads the unit word after the template, which decides fraction vs decimal
                     .replace(Regex("\\{\\{ *scale\\(((\\d|\\.)+)\\) *\\}\\}(?=(?: *([A-Za-z]+(?: oz)?))?)")) { // replaces scale templates
