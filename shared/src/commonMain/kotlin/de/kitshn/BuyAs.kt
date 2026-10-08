@@ -82,9 +82,10 @@ fun packagesFrom(conversions: List<TandoorUnitConversion>): Map<String, BuyPacka
  *   (pieces, cups, a bare count) can't be added in, so there's no chip rather than a wrong one.
  * - Counts like the grams chips: the unchecked entries, or all of them once everything is checked.
  * - A by-weight food whose amounts are all in oz or lb gets no lb chip; they say it already.
+ * - Negative amounts count: the phone page stores a lowered amount as a negative difference entry.
  */
 fun buyChip(lines: List<BuyLine>, byWeight: Boolean, pkg: BuyPackage?): BuyChip? {
-    val measured = lines.filter { it.amount > 0.0 }
+    val measured = lines.filter { it.amount != 0.0 }
     if(measured.isEmpty()) return null
 
     fun grams(line: BuyLine): Double? =

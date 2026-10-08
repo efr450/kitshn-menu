@@ -57,7 +57,8 @@ export function packagesFrom(conversions) {
  * or null when there's nothing useful to say. See buyChip in BuyAs.kt for the reasoning.
  */
 export function buyChip(lines, byWeight, pkg) {
-  const measured = lines.filter(l => l.amount > 0);
+  // negative amounts count: edit.js stores a lowered amount as a negative difference entry
+  const measured = lines.filter(l => l.amount !== 0);
   if (!measured.length) return null;
 
   const grams = l => {

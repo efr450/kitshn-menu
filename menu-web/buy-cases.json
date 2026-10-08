@@ -662,6 +662,80 @@
         "label": "¼ lb",
         "checked": false
       }
+    },
+    {
+      "name": "a negative difference lowers the packages",
+      "lines": [
+        [
+          2400,
+          "g",
+          "g",
+          false
+        ],
+        [
+          -1000,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": {
+        "label": "1 half-gallon",
+        "checked": false
+      }
+    },
+    {
+      "name": "a negative difference lowers the pounds",
+      "lines": [
+        [
+          500,
+          "g",
+          "g",
+          false
+        ],
+        [
+          -46.4,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": true,
+      "pkg": null,
+      "expect": {
+        "label": "1 lb",
+        "checked": false
+      }
+    },
+    {
+      "name": "lowered to nothing has no chip",
+      "lines": [
+        [
+          900,
+          "g",
+          "g",
+          false
+        ],
+        [
+          -900,
+          "g",
+          "g",
+          false
+        ]
+      ],
+      "byWeight": false,
+      "pkg": {
+        "name": "half-gallon",
+        "pluralName": "half-gallons",
+        "grams": 1992
+      },
+      "expect": null
     }
   ],
   "packagesFrom": [

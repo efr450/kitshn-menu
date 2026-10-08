@@ -13,7 +13,7 @@ export function snapshotHtml(aisles, savedAt) {
   const when = new Date(savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const rows = aisles.map(a => `<h2>${esc(a.name)}</h2>` + a.rows.map(r =>
     `<label class="row"><input type="checkbox" data-k="${esc(r.key)}"${r.done ? " checked" : ""}>` +
-    `<span class="food">${esc(r.name)}${r.buy ? `<small>${esc(r.amounts)} in recipes</small>` : ""}</span>` +
+    `<span class="food">${esc(r.name)}${r.sub ? `<small>${esc(r.sub)}</small>` : ""}</span>` +
     `<b>${esc(r.buy || r.amounts)}</b></label>`).join("")).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

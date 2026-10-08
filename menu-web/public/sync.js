@@ -27,7 +27,7 @@ export function syncLabel({ problem, sending, waiting, left, fresh }) {
 
 export class ShopSync {
   /**
-   * @param api   {listEntries(), loadPackages(), setChecked(ids, checked)}; errors carry kind "offline" | "signin" | "error"
+   * @param api   {listEntries(), loadCatalog(), setChecked(ids, checked)}; errors carry kind "offline" | "signin" | "error"
    * @param store {load(), save(state) -> boolean}
    */
   constructor({ api, store, onChange = () => {} }) {
@@ -36,6 +36,7 @@ export class ShopSync {
     this.onChange = onChange;
     this.entries = [];
     this.packages = {};
+    this.catalog = { units: [], foods: [], categories: [] }; // for adding and changing items (foods.js, edit.js)
     this.pending = new Map(); // entry id -> {checked, ackSeq}: ackSeq is null until Tandoor accepts it
     this.seq = 0;             // counts refreshes and acks, to order them
     this.appliedSeq = 0;      // the start seq of the refresh whose answer is shown
@@ -52,13 +53,14 @@ export class ShopSync {
     if (!s) return;
     this.entries = s.entries || [];
     this.packages = s.packages || {};
+    this.catalog = s.catalog || this.catalog;
     this.savedAt = s.savedAt || null;
     // accepted ticks come back as accepted before any refresh (ackSeq 0), so the first refresh clears them
     this.pending = new Map((s.pending || []).map(([id, checked, acked]) => [id, { checked, ackSeq: acked ? 0 : null }]));
   }
 
   save() {
-    this.stored = this.store.save({ entries: this.entries, packages: this.packages, savedAt: this.savedAt,
+    this.stored = this.store.save({ entries: this.entries, packages: this.packages, catalog: this.catalog, savedAt: this.savedAt,
       pending: [...this.pending].map(([id, p]) => [id, p.checked, p.ackSeq !== null]) }) !== false;
   }
 
@@ -123,15 +125,19 @@ export class ShopSync {
   }
 
   /**
-   * Fetch the list (and package sizes when asked); keep the old copy if that fails. Package sizes
-   * failing doesn't cost the list. Returns whether package sizes were refreshed.
+   * Fetch the list (and the catalog: package sizes, units, foods, aisles, when asked); keep the old
+   * copy if that fails. The catalog failing doesn't cost the list. Returns whether the catalog was refreshed.
    */
-  async refresh({ packages = false } = {}) {
+  async refresh({ catalog = false } = {}) {
     const started = ++this.seq;
-    const [list, pkgs] = await Promise.allSettled([this.api.listEntries(), packages ? this.api.loadPackages() : Promise.resolve(null)]);
-    const gotPackages = packages && pkgs.status === "fulfilled";
-    if (started < this.appliedSeq) return gotPackages; // a newer refresh already answered
-    if (gotPackages) this.packages = pkgs.value;
+    const [list, cat] = await Promise.allSettled([this.api.listEntries(), catalog ? this.api.loadCatalog() : Promise.resolve(null)]);
+    const gotCatalog = catalog && cat.status === "fulfilled";
+    if (started < this.appliedSeq) return gotCatalog; // a newer refresh already answered
+    if (gotCatalog) {
+      const { packages, ...rest } = cat.value;
+      this.packages = packages;
+      this.catalog = rest;
+    }
     if (list.status === "fulfilled") {
       this.appliedSeq = started;
       this.entries = list.value;
@@ -148,6 +154,6 @@ export class ShopSync {
       this.problem = list.reason?.kind || "error";
     }
     this.onChange();
-    return gotPackages;
+    return gotCatalog;
   }
 }

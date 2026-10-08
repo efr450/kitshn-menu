@@ -2,6 +2,7 @@
 // the buy amount (buy.js) and the recipe amounts. Pure, so test/list.test.js covers it; app.js only draws.
 
 import { BY_WEIGHT_MARKER, buyChip, buyPackageKey, hasMarker } from "./buy.js";
+import { isChange } from "./edit.js";
 
 export const OTHER_AISLE = "Other";
 
@@ -41,23 +42,41 @@ export function recipeAmounts(entries) {
   return out;
 }
 
-/** One row per food: {key, name, ids, done, buy, amounts}. `packages` comes from packagesFrom. */
+const chipFor = (entries, food, packages) => buyChip(
+  entries.map(e => ({ amount: e.amount, unitName: e.unit?.name ?? null, unitBaseUnit: e.unit?.base_unit ?? null, checked: e.checked })),
+  hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER),
+  packages[buyPackageKey(food.name)] ?? null,
+);
+const joined = amounts => amounts.map(a => a.text).join(" + ");
+
+/**
+ * One row per food: {key, name, ids, done, buy, amounts, sub, edited, was, gone}. `packages` comes from
+ * packagesFrom. A row changed on the phone (edit.js) is `edited`, and `was` says what it was before.
+ */
 export function foodRow(entries, packages) {
   const food = entries[0].food;
-  const amounts = recipeAmounts(entries);
+  const originals = entries.filter(e => !isChange(e));
+  const edited = originals.length < entries.length;
+  // once an amount is set on the phone, an unmeasured original ("some") adds nothing to say
+  const amounts = recipeAmounts(edited ? entries.filter(e => isChange(e) || e.amount !== 0 || e.unit) : entries);
   const plural = amounts.some(a => a.sum > 1) && food.plural_name?.trim();
-  const chip = buyChip(
-    entries.map(e => ({ amount: e.amount, unitName: e.unit?.name ?? null, unitBaseUnit: e.unit?.base_unit ?? null, checked: e.checked })),
-    hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER),
-    packages[buyPackageKey(food.name)] ?? null,
-  );
+  const chip = chipFor(entries, food, packages);
+  const before = originals.length ? joined(recipeAmounts(originals)).replace(/^some$/, "") : "";
+  const fromRecipes = originals.length > 0 && originals.every(e => e.list_recipe_data?.recipe != null);
   return {
     key: food.id,
     name: plural ? food.plural_name.trim() : food.name,
     ids: entries.map(e => e.id),
     done: entries.every(e => e.checked),
     buy: chip?.label ?? null,
-    amounts: amounts.map(a => a.text).join(" + "),
+    // lowered to nothing on the phone: say so rather than "0 g"
+    amounts: edited && amounts.length && amounts.every(a => a.sum <= 0) ? "none" : joined(amounts),
+    // only changes left (their recipe was taken off) and nothing to buy: not worth a row
+    gone: !originals.length && amounts.every(a => a.sum <= 0),
+    // under the buy amount: what was asked for, before any change
+    sub: chip && (before || !edited) ? `${before || joined(amounts)} ${fromRecipes ? "in recipes" : "on the list"}` : null,
+    edited,
+    was: edited ? (originals.length ? chipFor(originals, food, packages)?.label || before || "no amount" : "no amount") : null,
   };
 }
 
@@ -73,10 +92,11 @@ export function shoppingAisles(entries, packages) {
   for (const list of byFood.values()) {
     const name = list[0].food.supermarket_category?.name || OTHER_AISLE;
     if (!aisles.has(name)) aisles.set(name, []);
-    aisles.get(name).push(foodRow(list, packages));
+    const row = foodRow(list, packages);
+    if (!row.gone) aisles.get(name).push(row);
   }
   const order = (a, b) => (a === OTHER_AISLE) - (b === OTHER_AISLE) || a.localeCompare(b);
-  return [...aisles.keys()].sort(order).map(name => {
+  return [...aisles.keys()].filter(name => aisles.get(name).length).sort(order).map(name => {
     const rows = aisles.get(name).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     return { name, rows, left: rows.filter(r => !r.done).length };
   });

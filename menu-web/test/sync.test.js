@@ -21,7 +21,10 @@ class FakeTandoor {
     await this.gate("list");
     return snapshot;
   }
-  async loadPackages() { await this.gate("packages"); return { "milk, whole": { name: "half-gallon", pluralName: null, grams: 1992 } }; }
+  async loadCatalog() {
+    await this.gate("catalog");
+    return { packages: { "milk, whole": { name: "half-gallon", pluralName: null, grams: 1992 } }, units: [{ id: 13, name: "g" }], foods: [], categories: [] };
+  }
   async setChecked(ids, checked) {
     await this.gate(`set ${ids.join(",")}=${checked}`);
     for (const id of ids) if (this.rows.has(id)) this.rows.get(id).checked = checked;
@@ -150,10 +153,11 @@ test("a ticked entry deleted elsewhere is forgotten once sent", async () => {
 test("a failed refresh keeps the saved list and says why", async () => {
   const t = new FakeTandoor(rows());
   const s = new ShopSync({ api: t, store: new MemoryStore() });
-  await s.refresh({ packages: true });
+  await s.refresh({ catalog: true });
   assert.ok(s.packages["milk, whole"]);
+  assert.equal(s.catalog.units[0].name, "g");
   t.fail = "signin";
-  await s.refresh({ packages: true });
+  await s.refresh({ catalog: true });
   assert.equal(s.problem, "signin");
   assert.equal(s.view().length, 3);
   assert.ok(s.packages["milk, whole"]);
@@ -215,11 +219,11 @@ test("an older refresh answering after a newer one is dropped", async () => {
   assert.equal(checkedOf(s)[3], true);
 });
 
-test("package sizes failing doesn't cost the list", async () => {
+test("the catalog failing doesn't cost the list", async () => {
   const t = new FakeTandoor(rows());
-  t.loadPackages = async () => { throw Object.assign(new Error("bad row"), { kind: "error" }); };
+  t.loadCatalog = async () => { throw Object.assign(new Error("bad row"), { kind: "error" }); };
   const s = new ShopSync({ api: t, store: new MemoryStore() });
-  assert.equal(await s.refresh({ packages: true }), false);
+  assert.equal(await s.refresh({ catalog: true }), false);
   assert.equal(s.view().length, 3);
   assert.equal(s.problem, null);
 });

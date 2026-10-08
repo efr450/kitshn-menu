@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { snapshotFileName, snapshotHtml } from "../public/snapshot.js";
 
 const aisles = [{ name: "Dairy & <Eggs>", left: 1, rows: [
-  { key: 54, name: "Milk, whole", ids: [1], done: false, buy: "1 half-gallon", amounts: "900 g" },
+  { key: 54, name: "Milk, whole", ids: [1], done: false, buy: "1 half-gallon", amounts: "900 g", sub: "900 g in recipes" },
   { key: 9, name: "Butter", ids: [2], done: true, buy: null, amounts: "43 g" },
 ] }];
 const at = Date.UTC(2026, 9, 8, 18, 30);

@@ -32,8 +32,10 @@ A fork of [kitshn](https://github.com/kitshn-app/kitshn) (Kotlin Multiplatform c
   - `buy.js` repeats `BuyAs.kt`. Both must pass `menu-web/buy-cases.json` (`BuyCasesTest` in `shared/src/jvmTest`, `test/buy.test.js`), so change both and add a case together.
   - `list.js` groups entries into aisles (category name order, Other last).
   - `sync.js` keeps Tandoor as the only list. Ticks are absolute checked values sent through `shopping-list-entry/bulk/`, queued while offline and drawn over the fetched list until a refresh that started after Tandoor accepted them.
-  - `sw.js` caches the page's own files network-first.
+  - `sw.js` caches the page's own files as one versioned set; run `npm run sw-version` after changing any of them (a test checks).
   - `snapshot.js` builds "Save copy".
+  - Adding items (box at the top): `parse.js` reads the amount ("2 lb", "a dozen", "half gallon", "6 x 1 lb") using Tandoor's unit names. `foods.js` matches Tandoor's foods, ignoring plurals and word order, and proposes a new food as "Head, specifics" in the aisle every food with that head shares; otherwise it asks for an aisle. `actions.js` makes the aisle, food and entry (weights in grams). Adding needs signal.
+  - Changing amounts (`edit.js`): the original entries are never touched. A change is one difference entry per food, which can be negative, under a shopping-list "recipe" named "Changed by hand" (no recipe). All foods share that group, and it is deleted with its last change. A new change on a ticked row is created unticked and then ticked through bulk; PATCHes always send `checked`, because Tandoor hides ticked entries without `completed_at`. `buy.js`/`BuyAs.kt` count negative lines, so a lowered amount shows on the tablet too.
   - Tests: `cd menu-web && npm test` (Node, no dependencies). Try it locally with `node dev-server.js --env <file with TANDOOR_URL/TANDOOR_TOKEN>`, which writes to the real list.
 
 ## Build and test

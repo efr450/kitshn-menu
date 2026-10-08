@@ -11,7 +11,7 @@
   <script type="module" src="/shop/app.js"></script>
 </head>
 <body>
-  <header class="top">
+  <header class="top" id="top">
     <h1>Shopping</h1>
     <button class="pill" id="pill" type="button" title="Refresh now">Loading…</button>
     <button class="more" id="more" type="button" aria-label="More" aria-haspopup="menu" aria-expanded="false">⋯</button>
@@ -19,8 +19,16 @@
       <button type="button" role="menuitem" id="save">Save copy<small>a file on your phone that opens with no signal</small></button>
       <button type="button" role="menuitem" id="refresh">Refresh now<small>pull the latest list from home</small></button>
     </div>
+    <div class="add">
+      <div class="field">
+        <input id="add-in" type="text" placeholder="Add: 2 lb chicken thighs, a dozen eggs…" autocomplete="off" autocapitalize="none" enterkeyhint="done" aria-label="Add an item">
+        <span class="amt-tag" id="add-amt" hidden></span>
+      </div>
+      <div class="sug" id="add-sug" hidden></div>
+    </div>
   </header>
   <p class="note" id="note" hidden></p>
   <main id="list"></main>
+  <p class="toast" id="toast" role="status" hidden></p>
 </body>
 </html>
