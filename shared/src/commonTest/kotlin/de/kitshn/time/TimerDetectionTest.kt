@@ -86,6 +86,12 @@ class TimerDetectionTest {
 
     @Test fun spacedDashRangeMinutes() = assertEquals("(timer-range://600/900)", "10 - 15 min".singleUri())
 
+    @Test fun enDashRangeMinutes() = assertEquals("(timer-range://300/360)", "sauté 5–6 min, until soft".singleUri())
+
+    @Test fun emDashRangeMinutes() = assertEquals("(timer-range://900/1200)", "15—20 min".singleUri())
+
+    @Test fun spacedEmDashIsNotARange() = assertEquals("(timer://1800)", "Serves 4 — 30 minutes total".singleUri())
+
     @Test fun wordRangeBis() = assertEquals("(timer-range://600/900)", "10 bis 15 Minuten".singleUri())
 
     @Test fun wordRangeTo() = assertEquals("(timer-range://600/900)", "10 to 15 min".singleUri())

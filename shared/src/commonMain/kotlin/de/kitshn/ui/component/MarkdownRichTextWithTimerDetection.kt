@@ -95,8 +95,9 @@ fun MarkdownRichTextWithTimerDetection(
             onTimerClick = {
                 onStartTimer(it, it, timerName)
             },
-            onTimerRangeClick = { from, to ->
-                onStartTimer(from, to, timerName)
+            // Menu fork: a range ("5–6 min") starts a timer for its first number, no picker.
+            onTimerRangeClick = { from, _ ->
+                onStartTimer(from, from, timerName)
             },
             onUriClick = {
                 uriHandler.openUri(it)

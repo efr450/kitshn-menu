@@ -31,11 +31,14 @@ fun detectTimers(markdown: String, defs: TimerDetectionDefs): String {
         ?.let { """(?:(?:$it)\s+)?""" }
         .orEmpty()
 
+    // Menu fork: unspaced en and em dashes count as range separators too ("5–6 min").
+    // Spaced ones are prose punctuation ("Serves 4 — 30 min"), so only the hyphen takes spaces.
+    val dash = """(?:\s*-\s*|[–—])"""
     val rangeSep = if (defs.rangeDefs.isNotEmpty()) {
         val rangeWords = defs.rangeDefs.toRegexAlt()
-        """(?:\s*-\s*|\s+(?:$rangeWords)\s+$qualifier)"""
+        """(?:$dash|\s+(?:$rangeWords)\s+$qualifier)"""
     } else {
-        """\s*-\s*"""
+        dash
     }
 
     val hourRegex = Regex("^($hours)$", RegexOption.IGNORE_CASE)

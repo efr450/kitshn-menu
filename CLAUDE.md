@@ -22,6 +22,7 @@ A fork of [kitshn](https://github.com/kitshn-app/kitshn) (Kotlin Multiplatform c
 - Add to shopping: foods Tandoor marks On Hand (`TandoorFood.food_onhand`) start unchecked like `ignore_shopping` ones, dim to 60% instead of 20%, and get a sage "pantry" pill (`IngredientItem.labelSuffix`) and checkbox border. Recipes loaded from the Room cache carry no On Hand, so nothing gets the pill there.
 - Navigation rail: a "Claude" item (online only, after Settings) opens `http://<Tandoor host>:8765/`, the Kitchen redirect served by `kitchen/kitchen.py` in the Menu repo, which sends it to a blank claude.ai/code/new chat (`kitchenUrl()` in `Main.kt`). On Android `rememberKitchenOpener()` passes `Browser.EXTRA_APPLICATION_ID`, so Chrome reuses one tab instead of opening a new one per tap.
 - Shopping list: an empty food plural falls back to the name (upstream treated only null that way and printed a blank row), and unmeasured entries (amount 0, no unit, e.g. "some parmesan") get a "some" chip.
+- Step timers: `detectTimers()` also treats en and em dashes as range separators ("5–6 min", our importer's style), and tapping a range starts a timer for its first number with no picker (`MarkdownRichTextWithTimerDetection`). Tests: `TimerDetectionTest`.
 - Meal-plan dates: `parseTandoorDate()` takes the date as Tandoor wrote it (Tandoor sends its own timezone offset) and `toStartOfDayString()` sends midnight without an offset. Do not convert to UTC or the device timezone: an 18:00-07:00 dinner is the next day in UTC. Tests: `MealPlanDateUtilsTest`.
 
 ## Build and test
