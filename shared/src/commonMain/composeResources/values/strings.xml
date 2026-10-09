@@ -265,7 +265,7 @@
     <string name="home_meal_plan_promotion_tomorrow_title">Tomorrow's menu</string>
     <string name="home_search_empty">The whole of Tandoor was examined - no suitable recipe could be found.</string>
     <string name="home_search_empty_query">Enter a query to search Tandoor.</string>
-    <string name="home_search_tandoor">Search Tandoor</string>
+    <string name="home_search_tandoor">Search Recipes, Ingredients, Meals…</string>
     <string name="home_section_american">&#127482;&#127480; &#129413; &#128509;</string>
     <string name="home_section_asian">&#127982;&#129511;&#128009;&#129512;&#127879;⛩️&#127886;</string>
     <string name="home_section_austrian">&#127462;&#127481;&#128247;&#127984;</string>
