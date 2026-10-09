@@ -16,7 +16,8 @@
     <button class="pill" id="pill" type="button" title="Refresh now">Loading…</button>
     <button class="more" id="more" type="button" aria-label="More" aria-haspopup="menu" aria-expanded="false">⋯</button>
     <div class="menu" id="menu" role="menu" hidden>
-      <button type="button" role="menuitem" id="save">Save copy<small>a file on your phone that opens with no signal</small></button>
+      <button type="button" role="menuitemcheckbox" id="hide" aria-checked="false"><span>Hide checked items<small id="hide-why">ticked items stay, crossed out</small></span><span class="switch" aria-hidden="true"></span></button>
+      <button type="button" role="menuitem" id="clear">Clear checked<small>take ticked items off the list</small></button>
       <button type="button" role="menuitem" id="refresh">Refresh now<small>pull the latest list from home</small></button>
     </div>
     <div class="add">
@@ -26,6 +27,7 @@
       </div>
       <div class="sug" id="add-sug" hidden></div>
     </div>
+    <div class="rchips" id="srcs" role="toolbar" aria-label="Show one recipe's items" hidden></div>
   </header>
   <p class="note" id="note" hidden></p>
   <main id="list"></main>

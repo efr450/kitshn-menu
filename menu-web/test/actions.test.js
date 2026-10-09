@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { addItem, setRowAmount } from "../public/actions.js";
+import { addItem, removeEntries, setRowAmount, storedAmount } from "../public/actions.js";
 import { EDIT_LIST, plan } from "../public/edit.js";
 import { aisles, cats, entry, milk, tandoorUnits } from "./fixtures.js";
 
@@ -128,4 +128,33 @@ test("a change in another unit replaces the old one, filed in the existing group
     ["addEntry", { food: entries[0].food, amount: 1, unit: CAN, listRecipe: 77 }],
     ["setChecked", [900], true],
   ]);
+});
+
+test("deleting entries: one call each; with every change in the group, the group goes instead", async () => {
+  const api = fakeApi();
+  const entries = milkEntries([900, recipe], [3084, edits]);
+  await removeEntries(api, entries.map(e => e.id), entries);
+  assert.deepEqual(api.calls, [["removeEditList", 77], ["removeEntry", entries[0].id]]);
+});
+
+test("deleting one food while another still has a change leaves the group", async () => {
+  const api = fakeApi();
+  const other = Object.assign(entry("Beef, ground", 100, G, { foodId: 9 }), edits);
+  const entries = milkEntries([900, recipe], [3084, edits]);
+  await removeEntries(api, entries.map(e => e.id), [...entries, other]);
+  assert.deepEqual(api.calls, [["removeEntry", entries[0].id], ["removeEntry", entries[1].id]]);
+});
+
+test("a typed amount is stored as addItem stores it: weights in grams", () => {
+  assert.deepEqual(storedAmount(2, LB, tandoorUnits), { amount: 907.2, unit: G });
+  assert.deepEqual(storedAmount(2, CAN, tandoorUnits), { amount: 2, unit: CAN });
+  assert.deepEqual(storedAmount(3, null, tandoorUnits), { amount: 3, unit: null });
+});
+
+test("an entry already deleted elsewhere (404) counts as deleted; the rest still go", async () => {
+  const api = fakeApi();
+  const entries = [entry("Leek", 1, null, { foodId: 3 }), entry("Kale", 1, null, { foodId: 4 })];
+  api.removeEntry = async id => { api.calls.push(["removeEntry", id]); if (id === entries[0].id) throw Object.assign(new Error("gone"), { kind: "error", status: 404 }); };
+  await removeEntries(api, entries.map(e => e.id), entries);
+  assert.deepEqual(api.calls, [["removeEntry", entries[0].id], ["removeEntry", entries[1].id]]);
 });

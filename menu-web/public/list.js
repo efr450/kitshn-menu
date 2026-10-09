@@ -42,6 +42,51 @@ export function recipeAmounts(entries) {
   return out;
 }
 
+export const ADDED = "added"; // the source key for entries no recipe brought (typed on the phone or tablet)
+const DAY = { weekday: "short" };
+
+/**
+ * Where an entry came from: {key, name, when}. A recipe's group (its meal plan's day and meal as
+ * `when`), or ADDED for one typed in (or waiting to send). Changes made on the phone (edit.js) have none: null.
+ */
+export function sourceOf(e) {
+  if (isChange(e)) return null;
+  if (e.waiting) return { key: ADDED, name: "Added by hand", when: "waiting to send" }; // queue.js
+
+  const g = e.list_recipe_data;
+  if (!g || (g.recipe == null && !g.name)) return { key: ADDED, name: "Added by hand", when: "" };
+  const mp = g.meal_plan_data;
+  // the day Tandoor wrote, not the phone's: an 18:00-07:00 dinner is the next day in UTC (CLAUDE.md)
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})/.exec(mp?.from_date ?? "");
+  const day = ymd ? new Date(+ymd[1], ymd[2] - 1, +ymd[3]).toLocaleDateString("en-US", DAY) : "";
+  return { key: `r${e.list_recipe}`, name: g.recipe_data?.name || g.name || "Recipe", when: [day, mp?.meal_type_name].filter(Boolean).join(" ") };
+}
+
+/** One food's amount per source, for the breakdown: [{key, name, when, text}]; a change shows as "Changed by hand". */
+export function rowSources(entries) {
+  const out = new Map();
+  for (const e of entries) {
+    const s = sourceOf(e) ?? { key: "change", name: "Changed by hand", when: "" };
+    if (!out.has(s.key)) out.set(s.key, { ...s, list: [] });
+    out.get(s.key).list.push(e);
+  }
+  return [...out.values()].map(({ list, ...s }) => ({ ...s, text: recipeAmounts(list.map(e => ({ ...e, checked: false }))).map(a => a.text).join(" + ") || "some" }));
+}
+
+/** The recipe chips: every source on the list, recipes first, with how many of its foods are left. */
+export function listSources(entries) {
+  const out = new Map();
+  for (const e of entries) {
+    const s = e.food && sourceOf(e);
+    if (!s) continue;
+    if (!out.has(s.key)) out.set(s.key, { ...s, foods: new Map() });
+    const foods = out.get(s.key).foods;
+    foods.set(e.food.id, (foods.get(e.food.id) ?? true) && e.checked);
+  }
+  return [...out.values()].sort((a, b) => (a.key === ADDED) - (b.key === ADDED))
+    .map(({ foods, ...s }) => ({ ...s, left: [...foods.values()].filter(done => !done).length }));
+}
+
 const chipFor = (entries, food, packages) => buyChip(
   entries.map(e => ({ amount: e.amount, unitName: e.unit?.name ?? null, unitBaseUnit: e.unit?.base_unit ?? null, checked: e.checked })),
   hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER),
@@ -50,7 +95,7 @@ const chipFor = (entries, food, packages) => buyChip(
 const joined = amounts => amounts.map(a => a.text).join(" + ");
 
 /**
- * One row per food: {key, name, ids, done, buy, amounts, sub, edited, was, gone}. `packages` comes from
+ * One row per food: {key, name, ids, done, buy, amounts, sub, edited, sources, was, gone}. `packages` comes from
  * packagesFrom. A row changed on the phone (edit.js) is `edited`, and `was` says what it was before.
  */
 export function foodRow(entries, packages) {
@@ -76,6 +121,8 @@ export function foodRow(entries, packages) {
     // under the buy amount: what was asked for, before any change
     sub: chip && (before || !edited) ? `${before || joined(amounts)} ${fromRecipes ? "in recipes" : "on the list"}` : null,
     edited,
+    // which recipes (or "added") want it, and how much each: the recipe chips filter on these
+    sources: rowSources(entries),
     was: edited ? (originals.length ? chipFor(originals, food, packages)?.label || before || "no amount" : "no amount") : null,
   };
 }

@@ -1,7 +1,7 @@
 // The writes behind adding an item and changing an amount on the phone page: which Tandoor calls,
 // in which order. `api` is api.js's (injected, so test/actions.test.js drives it with a fake);
-// app.js refreshes the list afterwards. Adding and changing need signal; a failure throws with
-// api.js's kind ("offline" | "signin" | "error") and nothing is queued.
+// app.js refreshes the list afterwards. A failure throws with api.js's kind ("offline" | "signin" |
+// "error"); adds made with no signal wait in queue.js, which sends them through addItem later.
 
 import { gramsPerUnit } from "./buy.js";
 import { EDIT_LIST, change, editListId, isChange } from "./edit.js";
@@ -11,13 +11,15 @@ const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
 /**
  * Add a typed item. `food` is a Tandoor food, or {name, aisle} for a new one where `aisle` is a
  * category or a new aisle's name. Weights are stored in grams, like every recipe amount; other
- * units as typed. Returns what happened: "added" | "unticked" | "already".
+ * units as typed. Returns what happened: "added" | "unticked" | "already". `onFood` hears about a
+ * food this made, so a second add of the same new name (queue.js) reuses it.
  */
-export async function addItem(api, { food, amount, unit, entries, catalog }) {
+export async function addItem(api, { food, amount, unit, entries, catalog, onFood = () => {} }) {
   if (food.id == null) {
     let aisle = food.aisle;
     if (typeof aisle === "string") aisle = catalog.categories.find(c => same(c.name, aisle)) ?? await api.addCategory(aisle.trim());
     food = await api.addFood(food.name, aisle);
+    onFood(food);
   }
   const mine = entries.filter(e => e.food?.id === food.id);
   if (amount == null) {
@@ -27,10 +29,33 @@ export async function addItem(api, { food, amount, unit, entries, catalog }) {
     await api.addEntry({ food, amount: 0 });
     return "added";
   }
-  const g = unit ? gramsPerUnit(unit.base_unit, unit.name) : null;
-  const grams = g != null && catalog.units.find(u => u.base_unit === "g" || u.name === "g");
-  await api.addEntry(grams ? { food, amount: Math.round(amount * g * 10) / 10, unit: grams } : { food, amount, unit: unit ?? null });
+  await api.addEntry({ food, ...storedAmount(amount, unit, catalog.units) });
   return "added";
+}
+
+/** A typed amount as it's stored: weights in grams (like every recipe amount), other units as typed. */
+export function storedAmount(amount, unit, units) {
+  const g = unit ? gramsPerUnit(unit.base_unit, unit.name) : null;
+  const grams = g != null && units.find(u => u.base_unit === "g" || u.name === "g");
+  return grams ? { amount: Math.round(amount * g * 10) / 10, unit: grams } : { amount, unit: unit ?? null };
+}
+
+/**
+ * Delete these entries (a swiped row, or every ticked one). When they include every change in the
+ * EDIT_LIST group, the group goes too (deleting it takes its entries), so no empty group is left behind.
+ * One already deleted elsewhere counts as done.
+ */
+export async function removeEntries(api, ids, all) {
+  const gone = new Set(ids);
+  const group = editListId(all);
+  const changes = all.filter(e => isChange(e) && e.list_recipe === group);
+  if (group != null && changes.length && changes.every(e => gone.has(e.id))) {
+    await api.removeEditList(group);
+    for (const e of changes) gone.delete(e.id);
+  }
+  for (const id of gone) {
+    try { await api.removeEntry(id); } catch (e) { if (e.status !== 404) throw e; } // already gone (the tablet, mi shop)
+  }
 }
 
 /**

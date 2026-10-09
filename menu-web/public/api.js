@@ -20,7 +20,7 @@ export function tandoorApi({ fetchFn = (...a) => fetch(...a), cookie = () => doc
     }
     // a missing session (or the CSRF cookie a session brings) means signing in to Tandoor again
     if (r.status === 401 || r.status === 403 || (r.redirected && r.url.includes("/accounts/login"))) throw failure("signin", `HTTP ${r.status}`);
-    if (!r.ok) throw failure("error", `HTTP ${r.status} for ${path}`);
+    if (!r.ok) throw Object.assign(failure("error", `HTTP ${r.status} for ${path}`), { status: r.status });
     return r.status === 204 ? null : r.json();
   }
 

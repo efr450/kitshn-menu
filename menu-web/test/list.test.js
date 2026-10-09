@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { formatAmount, foodRow, recipeAmounts, shoppingAisles } from "../public/list.js";
+import { formatAmount, foodRow, listSources, recipeAmounts, shoppingAisles, sourceOf } from "../public/list.js";
 import { aisles, entry, milk, units } from "./fixtures.js";
 
 const { G, STALK } = units;
@@ -66,4 +66,44 @@ test("entries of one food become one row", () => {
 test("an entry without a food is left out", () => {
   const got = shoppingAisles([{ id: 99, amount: 1, unit: null, checked: false, food: null }, entry("Salt", 0)], {});
   assert.deepEqual(got.flatMap(a => a.rows.map(r => r.name)), ["Salt"]);
+});
+
+const group = (id, name, recipe, mp = null) => ({ list_recipe: id, list_recipe_data: { id, name: "", recipe, recipe_data: recipe ? { name } : null, meal_plan_data: mp } });
+const chili = group(40, "Chili", 12, { from_date: "2026-10-13T18:00:00", meal_type_name: "Dinner" });
+const tacos = group(41, "Beef tacos", 13);
+const changed = { list_recipe: 77, list_recipe_data: { id: 77, name: "Changed by hand", recipe: null } };
+
+test("a row lists each recipe that wants it, with that recipe's amount; changes and typed ones apart", () => {
+  const e = [Object.assign(entry("Beef, ground", 450, G, { foodId: 7 }), chili), Object.assign(entry("Beef, ground", 230, G, { foodId: 7 }), tacos),
+    Object.assign(entry("Beef, ground", 100, G, { foodId: 7 }), changed), entry("Beef, ground", 0, null, { foodId: 7 })];
+  assert.deepEqual(foodRow(e, {}).sources.map(s => [s.name, s.when, s.text]), [
+    ["Chili", "Tue Dinner", "450 g"], ["Beef tacos", "", "230 g"], ["Changed by hand", "", "100 g"], ["Added by hand", "", "some"]]);
+});
+
+test("a ticked entry still shows its recipe's amount in the breakdown", () => {
+  const r = foodRow([Object.assign(entry("Salt", 5, G, { foodId: 3, checked: true }), chili)], {});
+  assert.equal(r.sources[0].text, "5 g");
+});
+
+test("the recipe chips: one per recipe with foods left, typed-in ones last; changes aren't a source", () => {
+  const got = listSources([
+    entry("Foil", 1, null, { foodId: 1 }),
+    Object.assign(entry("Beef, ground", 450, G, { foodId: 7 }), chili), Object.assign(entry("Onion", 1, null, { foodId: 8, checked: true }), chili),
+    Object.assign(entry("Beef, ground", 230, G, { foodId: 7 }), tacos), Object.assign(entry("Beef, ground", 50, G, { foodId: 7 }), changed),
+  ]);
+  assert.deepEqual(got.map(s => [s.key, s.name, s.left]), [["r40", "Chili", 1], ["r41", "Beef tacos", 1], ["added", "Added by hand", 1]]);
+});
+
+test("a waiting add counts as typed in, and says it's waiting", () => {
+  assert.deepEqual(sourceOf({ ...entry("Foil", 0), waiting: true }), { key: "added", name: "Added by hand", when: "waiting to send" });
+});
+
+test("the meal-plan day is Tandoor's, whatever the phone's timezone", () => {
+  const late = group(42, "Soup", 14, { from_date: "2026-10-13T23:30:00-07:00", meal_type_name: "Dinner" });
+  assert.equal(sourceOf(Object.assign(entry("Leek", 1), late)).when, "Tue Dinner");
+});
+
+test("a waiting add joins the typed-in line of its row", () => {
+  const e = [entry("Egg", 6, null, { foodId: 5 }), { ...entry("Egg", 12, null, { foodId: 5 }), waiting: true }];
+  assert.deepEqual(foodRow(e, {}).sources.map(s => [s.name, s.text]), [["Added by hand", "18"]]);
 });
