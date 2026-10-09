@@ -340,7 +340,7 @@ function draw() {
   const all = shown();
   const aisles = shoppingAisles(all, sync.packages, weighs());
   const left = aisles.reduce((s, a) => s + a.left, 0);
-  const pill = syncLabel({ problem: sync.problem, sending: sync.sending, waiting: sync.waiting() + waitingAdds(), left, fresh: sync.fresh });
+  const pill = syncLabel({ problem: sync.problem, sending: sync.sending, waiting: sync.waiting() + waitingAdds(), left, fresh: sync.fresh, online: navigator.onLine !== false });
   const unsent = new Set(sync.unsent());
   const note = noteFor();
   const sources = listSources(all);
@@ -798,7 +798,11 @@ $("hide").addEventListener("click", () => {
 });
 $("clear").addEventListener("click", () => { toggleMenu(false); clearChecked(); });
 $("refresh").addEventListener("click", () => { toggleMenu(false); update({ force: true }); });
-$("pill").addEventListener("click", () => update());
+$("pill").addEventListener("click", () => {
+  // the page retries by itself every 10 s; a touch retries now and says why it may not work
+  if (sync.problem === "offline" && navigator.onLine !== false) say("Can't reach home. Check that Tailscale is on, then wait a moment.");
+  update();
+});
 $("srcs").addEventListener("scroll", fadeEdges, { passive: true });
 document.addEventListener("click", e => {
   // a touch outside the open menu only closes it: it mustn't also tick the row underneath

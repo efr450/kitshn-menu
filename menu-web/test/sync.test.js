@@ -168,8 +168,10 @@ test("the pill says what's happening", () => {
   assert.deepEqual(at({}), { text: "Synced · 9 left", tone: "ok" });
   assert.deepEqual(at({ fresh: false }), { text: "Saved list · checking…", tone: "busy" });
   assert.deepEqual(at({ sending: true, waiting: 1 }), { text: "Sending…", tone: "busy" });
-  assert.deepEqual(at({ problem: "offline", waiting: 2 }), { text: "Offline · 2 to send", tone: "off" });
-  assert.deepEqual(at({ problem: "offline" }), { text: "Offline · saved list", tone: "off" });
+  assert.deepEqual(at({ problem: "offline", waiting: 2 }), { text: "Can't reach home · 2 to send", tone: "off" });
+  assert.deepEqual(at({ problem: "offline" }), { text: "Can't reach home · saved list", tone: "off" });
+  assert.deepEqual(at({ problem: "offline", online: false }), { text: "Offline · saved list", tone: "off" });
+  assert.deepEqual(at({ problem: "offline", online: false, waiting: 2 }), { text: "Offline · 2 to send", tone: "off" });
   assert.deepEqual(at({ problem: "signin" }), { text: "Sign in", tone: "off" });
   assert.deepEqual(at({ problem: "dropped" }), { text: "Some ticks didn't save", tone: "off" });
   assert.equal(at({ problem: "error", waiting: 1 }).text, "Can't sync · 1 to send");

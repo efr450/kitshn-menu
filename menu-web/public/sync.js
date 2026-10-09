@@ -14,10 +14,15 @@
 export const GIVE_UP_AFTER = 3; // failed sends Tandoor answered with an error (not offline) before dropping the ticks
 
 /** The sync pill: {text, tone} with tone "ok" | "busy" | "off". */
-export function syncLabel({ problem, sending, waiting, left, fresh }) {
+/** `online`: the phone has a connection (navigator.onLine). Then an "offline" problem means home is
+ *  out of reach, usually because Tailscale is off, and saying "Offline" would mislead. */
+export function syncLabel({ problem, sending, waiting, left, fresh, online = true }) {
   if (sending) return { text: "Sending…", tone: "busy" };
   if (problem === "signin") return { text: "Sign in", tone: "off" };
-  if (problem === "offline") return { text: waiting ? `Offline · ${waiting} to send` : "Offline · saved list", tone: "off" };
+  if (problem === "offline") {
+    const what = online ? "Can't reach home" : "Offline";
+    return { text: waiting ? `${what} · ${waiting} to send` : `${what} · saved list`, tone: "off" };
+  }
   if (problem === "dropped") return { text: "Some ticks didn't save", tone: "off" };
   if (problem) return { text: waiting ? `Can't sync · ${waiting} to send` : "Can't reach Tandoor", tone: "off" };
   if (!fresh) return { text: "Saved list · checking…", tone: "busy" };
