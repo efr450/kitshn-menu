@@ -37,8 +37,8 @@
   },
   "shortcuts": [
     {
-      "name": "Add a recipe",
-      "short_name": "Add recipe",
+      "name": "Add/Monitor Recipe",
+      "short_name": "Add/Monitor",
       "url": "/shop/add/",
       "icons": [
         {
