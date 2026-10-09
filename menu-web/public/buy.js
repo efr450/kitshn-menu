@@ -18,6 +18,25 @@ export function hasMarker(description, marker) {
 /** The key packagesFrom files a food's package under. */
 export const buyPackageKey = foodName => foodName.trim().toLowerCase();
 
+// A food can overrule its aisle: its description says BY_WEIGHT_MARKER (buy it by the pound, say a
+// cheese in Dairy) or BY_COUNT_MARKER (count it, though its aisle weighs). Phone page only for now:
+// the app's BuyAs.kt still reads the aisle alone.
+export const BY_COUNT_MARKER = "by count";
+
+/** Food name key -> true (by weight) | false (by count), for the foods whose description says so. */
+export function weighsFrom(foods) {
+  const out = {};
+  for (const f of foods) {
+    if (hasMarker(f.description, BY_COUNT_MARKER)) out[buyPackageKey(f.name)] = false;
+    else if (hasMarker(f.description, BY_WEIGHT_MARKER)) out[buyPackageKey(f.name)] = true;
+  }
+  return out;
+}
+
+/** Whether a food is bought by the pound: its own say (weighsFrom) wins over its aisle's. */
+export const byWeightOf = (food, weighs = {}) =>
+  weighs[buyPackageKey(food.name)] ?? hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER);
+
 /** Grams in one of a unit when it's a weight (by Tandoor base unit, else by name), else null. */
 export function gramsPerUnit(baseUnit, name) {
   const key = ((baseUnit && baseUnit.trim()) ? baseUnit : name)?.trim().toLowerCase();

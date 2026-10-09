@@ -4,10 +4,10 @@
 // test/sw.test.js fails when it's stale. A changed VERSION makes phones fetch the new set; the next
 // open shows it. Tandoor's /api/ requests pass straight through (sync.js keeps the list).
 
-const VERSION = "5f5ca517e2b6";
+const VERSION = "8298fc66f8fb";
 const CACHE = `menu-shop-${VERSION}`;
 const SHELL = ["/shop/", "/shop/app.css", "/shop/app.js", "/shop/api.js", "/shop/buy.js", "/shop/list.js",
-  "/shop/sync.js", "/shop/queue.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/manifest.json", "/shop/icon.svg", "/shop/icon-192.png", "/shop/icon-512.png"];
+  "/shop/sync.js", "/shop/queue.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/foodset.js", "/shop/manifest.json", "/shop/icon.svg", "/shop/icon-192.png", "/shop/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));

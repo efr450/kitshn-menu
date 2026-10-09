@@ -6,7 +6,8 @@ import { addItem, removeEntries, setRowAmount } from "./actions.js";
 import { tandoorApi } from "./api.js";
 import { isChange, plan } from "./edit.js";
 import { aisleOrder, exactFood, foodIndex, proposeFood, stillTyping, suggestFoods } from "./foods.js";
-import { pounds } from "./buy.js";
+import { PACKAGE_MARKER, buyChip, hasMarker, pounds, weighsFrom } from "./buy.js";
+import { aisleWeighs, changes, packageProblem, parseSize, ruleProblem, saveFood, settingsOf, sizeText } from "./foodset.js";
 import { ADDED, formatAmount, listSources, shoppingAisles, unitLabel } from "./list.js";
 import { parseAmount, unitIndex } from "./parse.js";
 import { AddQueue, isWaiting } from "./queue.js";
@@ -16,6 +17,7 @@ const POLL_MS = 10_000;               // refresh while the page is open
 const CATALOG_MS = 10 * 60_000;       // package sizes, foods, units and aisles change rarely
 const SAVE_AFTER_MS = 800;            // an amount change is sent once the − / + taps pause
 const UNDO_MS = 4000;                 // a delete waits this long for Undo before it goes to Tandoor
+const HOLD_MS = 500;                  // hold a row this long to open its food's settings
 const LINGER_MS = 1500;               // with "Hide checked items" on, a ticked row stays this long (to untick a mistake)
 const LIST_KEY = "menu-shop-list";    // the last list: big, and only a convenience
 const TICKS_KEY = "menu-shop-ticks";  // unsent ticks: small, kept apart so a big list can't crowd them out
@@ -77,6 +79,13 @@ function indexes() {
     units = unitIndex(sync.catalog.units);
   }
   return { foods, units };
+}
+
+// foods that overrule their aisle on weight (buy.js), rebuilt only when the catalog changes
+let weighed = null, weighsMap = {};
+function weighs() {
+  if (weighed !== sync.catalog) { weighed = sync.catalog; weighsMap = weighsFrom(sync.catalog.foods); }
+  return weighsMap;
 }
 
 let later = null; // a message held back while an Undo toast is up
@@ -194,7 +203,7 @@ async function saveNow(key) {
   const want = pending?.key === key ? pending : null;
   const entries = byFood().get(key);
   if (!entries || !want) { if (want && pending === want) pending = null; return; } // deleted meanwhile
-  const p = plan(entries, sync.packages, sync.catalog.units);
+  const p = plan(entries, sync.packages, sync.catalog.units, weighs());
   try {
     await setRowAmount(api, {
       plan: p, target: want.reset ? (p.was ?? 0) : want.value, unit: want.reset ? p.unit : want.unit,
@@ -279,7 +288,7 @@ function removeLater(ids, text) {
 }
 
 function clearChecked() {
-  const rows = shoppingAisles(shown(), sync.packages).flatMap(a => a.rows).filter(r => r.done);
+  const rows = shoppingAisles(shown(), sync.packages, weighs()).flatMap(a => a.rows).filter(r => r.done);
   if (!rows.length) return;
   removeLater(rows.flatMap(r => r.ids), `Cleared ${rows.length} checked ${rows.length === 1 ? "item" : "items"}`);
 }
@@ -329,7 +338,7 @@ function swipeable(wrap, row, onDelete) {
 function draw() {
   if (dragging) { dirty = true; return; }
   const all = shown();
-  const aisles = shoppingAisles(all, sync.packages);
+  const aisles = shoppingAisles(all, sync.packages, weighs());
   const left = aisles.reduce((s, a) => s + a.left, 0);
   const pill = syncLabel({ problem: sync.problem, sending: sync.sending, waiting: sync.waiting() + waitingAdds(), left, fresh: sync.fresh });
   const unsent = new Set(sync.unsent());
@@ -377,7 +386,7 @@ function draw() {
 }
 
 function rowView(r, entries, unsent) {
-  const p = entries ? plan(entries, sync.packages, sync.catalog.units) : null; // null: only waiting adds
+  const p = entries ? plan(entries, sync.packages, sync.catalog.units, weighs()) : null; // null: only waiting adds
   const waiting = r.ids.some(isWaiting);
   const mine = filter && r.sources.find(s => s.key === filter);
   const row = el("div", "row" + (r.done ? " done" : "") + (waiting || r.ids.some(id => unsent.has(id)) ? " queued" : "")
@@ -403,10 +412,12 @@ function rowView(r, entries, unsent) {
     if (e.target !== row) return;
     if (e.key === " " || e.key === "Enter") { e.preventDefault(); tick(r); }
     if (e.key === "Delete") removeLater(r.ids, `Deleted ${r.name}`);
+    if (e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey)) { e.preventDefault(); openSheet(r); }
   });
   const wrap = el("div", "swipe");
   wrap.append(el("span", "bin", "Delete"), row);
   swipeable(wrap, row, () => removeLater(r.ids, `Deleted ${r.name}`));
+  holdable(row, () => openSheet(r));
   return wrap;
 }
 
@@ -558,6 +569,183 @@ $("add-in").addEventListener("keydown", e => {
   else if (e.key === "Enter") quickAdd(hits, fresh);
 });
 
+// --- a food's settings (hold its row) -------------------------------------------------------------
+
+// hold a row this long to open its food's settings; moving first is a scroll or a swipe
+function holdable(row, onHold) {
+  let timer = null, x0 = 0, y0 = 0;
+  const stop = () => { clearTimeout(timer); timer = null; row.classList.remove("hold"); };
+  // the click that follows the release isn't a tick, however long the hold lasted
+  row.addEventListener("pointerup", () => { if (row.dataset.held) setTimeout(() => delete row.dataset.held, 350); });
+  row.addEventListener("pointerdown", e => {
+    if (e.button || e.target.closest(".strip")) return;
+    x0 = e.clientX; y0 = e.clientY;
+    row.classList.add("hold");
+    timer = setTimeout(() => {
+      stop();
+      row.dataset.held = "1";
+      navigator.vibrate?.(15);
+      onHold();
+    }, HOLD_MS);
+  });
+  row.addEventListener("pointermove", e => { if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 8) stop(); });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) row.addEventListener(ev, stop);
+  row.addEventListener("contextmenu", e => e.preventDefault()); // a long touch would open the browser's menu
+  row.addEventListener("click", e => { if (row.dataset.held) { delete row.dataset.held; e.stopImmediatePropagation(); } }, true);
+}
+
+// the open sheet: the food (catalog copy), the row it came from, where it started, and the edits
+let sheet = null, scrimDown = false;
+
+function openSheet(r) {
+  const food = sync.catalog.foods.find(f => f.id === r.key);
+  if (!food) { say(`${r.name} isn't in Tandoor yet. Hold it again once it's sent.`); return; }
+  const now = settingsOf(food, sync.packages, weighs());
+  sheet = { food, row: r, now, aisle: now.aisle, mode: now.mode, modeSet: false, pkgName: now.pkg?.name ?? "",
+    pkgSize: now.pkg ? sizeText(now.pkg.grams) : "", newAisle: null, busy: false };
+  scrimDown = false;
+  drawSheet();
+  $("sheet").focus();
+}
+
+function closeSheet() {
+  sheet = null;
+  $("sheet").hidden = $("scrim").hidden = true;
+}
+
+// what Save would write, or a reason it can't
+function sheetPlan() {
+  const s = sheet;
+  // a new aisle typed but not confirmed with Use still counts
+  const typed = s.newAisle?.trim();
+  const aisle = typed ? sync.catalog.categories.find(c => c.name.toLowerCase() === typed.toLowerCase()) ?? typed : s.aisle;
+  if (s.mode === "package") {
+    const problem = packageProblem(s.pkgName, s.pkgSize, sync.catalog.units);
+    if (problem) return { problem };
+  }
+  const pkg = s.mode === "package" ? { name: s.pkgName.trim(), grams: parseSize(s.pkgSize) } : null;
+  const plan = changes(s.food, s.now, { aisle, mode: s.mode, pkg });
+  const problem = "rule" in plan ? ruleProblem(s.food.description, plan.rule) : null;
+  return problem ? { problem } : { plan, pkg };
+}
+
+// the row's entries as buy.js reads them, for the preview
+const buyLines = key => (byFood().get(key) ?? []).map(e => ({ amount: e.amount, unitName: e.unit?.name ?? null, unitBaseUnit: e.unit?.base_unit ?? null, checked: e.checked }));
+
+function drawSheet() {
+  const s = sheet;
+  const box = $("sheet");
+  $("sheet").hidden = $("scrim").hidden = false;
+  const head = el("div", "s-head");
+  head.append(el("b", null, s.food.name), el("span", null, s.row.amounts ? `On the list: ${s.row.amounts}` : "No amount on the list"));
+
+  // aisles: the busiest first, then Other (no aisle) and a new one
+  const chips = el("div", "chips");
+  const pickAisle = a => {
+    s.aisle = a; s.newAisle = null;
+    // the way it's bought follows the aisle until it's set here, unless the food has its own rule
+    if (!s.modeSet && !s.now.ownRule && s.mode !== "package") s.mode = aisleWeighs(typeof a === "string" ? null : a) ? "weight" : "count";
+    drawSheet();
+  };
+  const isAisle = a => (s.aisle?.id ?? s.aisle) === (a?.id ?? a);
+  for (const c of aisleOrder(indexes().foods, sync.catalog.categories)) chips.append(btn("chip" + (isAisle(c) ? " best" : ""), c.name, () => pickAisle(c)));
+  if (typeof s.aisle === "string") chips.append(btn("chip best", s.aisle, () => {}));
+  chips.append(btn("chip" + (s.aisle == null ? " best" : ""), "Other", () => pickAisle(null)));
+  chips.append(btn("chip", "+ new aisle…", () => { s.newAisle = ""; drawSheet(); $("sheet-aisle")?.focus(); }));
+  const kids = [head, el("h3", null, "Aisle"), chips];
+  if (s.newAisle !== null) {
+    const line = el("div", "line");
+    const input = Object.assign(el("input", "in"), { id: "sheet-aisle", placeholder: "Aisle name, e.g. Pet", value: s.newAisle, enterKeyHint: "done" });
+    const go = () => {
+      const name = input.value.trim();
+      if (name) pickAisle(sync.catalog.categories.find(c => c.name.toLowerCase() === name.toLowerCase()) ?? name);
+    };
+    input.addEventListener("input", () => { s.newAisle = input.value; paintSheet(); });
+    input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    line.append(input, btn("go", "Use", go));
+    kids.push(line);
+  }
+
+  // how it's bought
+  const seg = el("div", "seg");
+  const mode = (m, label, sub) => {
+    const b = btn(s.mode === m ? "on" : "", label, () => { s.mode = m; s.modeSet = true; drawSheet(); });
+    b.append(el("small", null, sub));
+    b.setAttribute("aria-pressed", String(s.mode === m));
+    return b;
+  };
+  seg.append(mode("count", "Count", "as the list says"), mode("weight", "Weight", "in lb"), mode("package", "Package", s.pkgName.trim() || "carton, bag…"));
+  kids.push(el("h3", null, "Buy as"), seg);
+  if (s.mode === "package") {
+    const pkg = el("div", "pkg");
+    const field = (label, id, value, placeholder, set, list) => {
+      const l = el("label", null, label);
+      const input = Object.assign(el("input"), { id, value, placeholder, autocomplete: "off", enterKeyHint: "done" });
+      if (list) input.setAttribute("list", list);
+      input.addEventListener("input", () => { set(input.value); paintSheet(); });
+      l.append(input);
+      return l;
+    };
+    const names = el("datalist");
+    names.id = "pkg-names";
+    for (const u of sync.catalog.units) if (hasMarker(u.description, PACKAGE_MARKER)) names.append(Object.assign(el("option"), { value: u.name }));
+    pkg.append(field("Called", "pkg-name", s.pkgName, "half-gallon", v => { s.pkgName = v; }, "pkg-names"),
+      field("Holds", "pkg-size", s.pkgSize, "1.9 kg", v => { s.pkgSize = v; }), names);
+    kids.push(pkg);
+  }
+  kids.push(el("div", "prev"), el("p", "s-note"));
+  const actions = el("div", "s-actions");
+  actions.append(btn("chip", "Cancel", closeSheet), Object.assign(btn("go", s.busy ? "Saving…" : "Save", saveSheet), { id: "sheet-save" }));
+  kids.push(actions);
+  box.replaceChildren(...kids);
+  paintSheet();
+}
+
+// the parts that change while the package fields are typed in (redrawing would drop the keyboard)
+function paintSheet() {
+  const s = sheet;
+  const { plan, pkg, problem } = sheetPlan();
+  const lines = buyLines(s.row.key);
+  const chip = problem ? null : buyChip(lines, s.mode === "weight", pkg && { name: pkg.name, pluralName: null, grams: pkg.grams });
+  const prev = $("sheet").querySelector(".prev");
+  prev.replaceChildren(el("span", null, "On the list"), el("b", null, problem ? "—" : chip?.label ?? (s.row.amounts || "no amount")));
+  const note = problem ?? (s.mode !== "count" && !chip && lines.some(l => l.amount !== 0) ? "Its amounts aren't weights, so the list keeps showing them as they are."
+    : plan && "rule" in plan ? "The tablet goes by the aisle for weight until its next update." : "Changes this food on every list.");
+  const n = $("sheet").querySelector(".s-note");
+  n.textContent = note;
+  n.classList.toggle("bad", !!problem);
+  $("sheet-save").disabled = s.busy || !!problem || !plan || !Object.keys(plan).length;
+}
+
+async function saveSheet() {
+  const s = sheet;
+  const { plan } = sheetPlan();
+  if (!plan || !Object.keys(plan).length) return;
+  s.busy = true;
+  drawSheet();
+  let error = null;
+  await serial(async () => { try { await saveFood(api, s.food, plan, sync.catalog); } catch (e) { error = e; } });
+  if (error) {
+    failed(error, "saving the food");
+    // part of it may have gone in (a new aisle or unit): start a retry from what Tandoor has now
+    await refreshAfterWrite({ force: true }).catch(() => {});
+    s.busy = false;
+    const fresh = sync.catalog.foods.find(f => f.id === s.food.id);
+    if (fresh) { s.food = fresh; s.now = settingsOf(fresh, sync.packages, weighs()); }
+    if (sheet === s) drawSheet();
+    return;
+  }
+  if (sheet === s) closeSheet();
+  say("aisle" in plan ? `Moved ${s.food.name} to ${typeof plan.aisle === "string" ? plan.aisle : plan.aisle?.name ?? "Other"}` : `Saved ${s.food.name}`);
+  await refreshAfterWrite({ force: true }); // the catalog too: package sizes and food rules live there
+  draw();
+}
+
+// only a touch that starts on the shade closes the sheet, not the release of the hold that opened it
+$("scrim").addEventListener("pointerdown", () => { scrimDown = true; });
+$("scrim").addEventListener("click", () => { if (scrimDown) closeSheet(); });
+$("sheet").addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+
 // --- refresh, menu, start ---------------------------------------------------------------------
 
 // one update at a time: polls, taps on the pill and coming back online all share it
@@ -593,7 +781,7 @@ function toggleMenu(isOpen = $("menu").hidden) {
   $("menu").hidden = !isOpen;
   $("more").setAttribute("aria-expanded", String(isOpen));
   if (!isOpen) return;
-  const checked = shoppingAisles(shown(), sync.packages).flatMap(a => a.rows).filter(r => r.done).length;
+  const checked = shoppingAisles(shown(), sync.packages, weighs()).flatMap(a => a.rows).filter(r => r.done).length;
   $("clear").disabled = !checked;
   $("clear").firstChild.textContent = checked ? `Clear checked (${checked})` : "Clear checked";
   $("hide").setAttribute("aria-checked", String(hideChecked));

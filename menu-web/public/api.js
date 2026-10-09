@@ -46,6 +46,8 @@ export function tandoorApi({ fetchFn = (...a) => fetch(...a), cookie = () => doc
     });
   }
   const ref = x => x && { id: x.id, name: x.name };
+  const conversion = (food, unit, grams) => ({ base_amount: 1, base_unit: { name: unit.name }, converted_amount: grams,
+    converted_unit: { name: "g" }, food: { name: food.name } });
 
   return {
     /** The list as Tandoor serves it by default (what the tablet shows). */
@@ -63,7 +65,8 @@ export function tandoorApi({ fetchFn = (...a) => fetch(...a), cookie = () => doc
         // a conversion row missing a unit is malformed (the app's parser would reject it); skip it, not the rest
         packages: packagesFrom(rows.flat().filter(c => c.base_unit && c.converted_unit)),
         units: units.map(({ id, name, plural_name, base_unit, description }) => ({ id, name, plural_name, base_unit, description })),
-        foods: foods.map(f => ({ id: f.id, name: f.name, plural_name: f.plural_name ?? null, ignore_shopping: !!f.ignore_shopping,
+        // a description only where it says something (buy.js weighsFrom reads it)
+        foods: foods.map(f => ({ id: f.id, name: f.name, plural_name: f.plural_name ?? null, ignore_shopping: !!f.ignore_shopping, ...(f.description ? { description: f.description } : {}),
           supermarket_category: f.supermarket_category && { id: f.supermarket_category.id, name: f.supermarket_category.name, description: f.supermarket_category.description ?? null } })),
         categories: categories.map(({ id, name, description }) => ({ id, name, description: description ?? null })),
       };
@@ -95,5 +98,25 @@ export function tandoorApi({ fetchFn = (...a) => fetch(...a), cookie = () => doc
 
     /** Delete that group and every entry in it. */
     removeEditList: id => write(`/api/shopping-list-recipe/${id}/`, "DELETE"),
+
+    // a food's settings (foodset.js). Tandoor 2.6 answers a food, unit or aisle update that leaves out
+    // `name` with a 500, so every update sends it.
+
+    getFood: food => call(`/api/food/${food.id}/`),
+
+    /** Change a food's aisle (a category, or null for none) and/or description. */
+    updateFood: (food, { aisle, description }) => write(`/api/food/${food.id}/`, "PATCH", {
+      name: food.name, ...(aisle !== undefined ? { supermarket_category: ref(aisle) } : {}), ...(description !== undefined ? { description } : {}),
+    }),
+
+    addUnit: name => write("/api/unit/", "POST", { name }),
+    updateUnit: (unit, { plural_name, description }) => write(`/api/unit/${unit.id}/`, "PATCH", { name: unit.name, plural_name, description }),
+
+    /** This food's own unit conversions (Tandoor's filter also returns general ones; callers check `food`). */
+    foodConversions: food => all(`/api/unit-conversion/?food_id=${food.id}`),
+    /** "1 <unit> <food> = grams g". */
+    addConversion: (food, unit, grams) => write("/api/unit-conversion/", "POST", conversion(food, unit, grams)),
+    updateConversion: (id, food, unit, grams) => write(`/api/unit-conversion/${id}/`, "PATCH", conversion(food, unit, grams)),
+    removeConversion: id => write(`/api/unit-conversion/${id}/`, "DELETE"),
   };
 }

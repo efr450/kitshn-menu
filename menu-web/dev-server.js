@@ -27,9 +27,10 @@ const tandoor = (env.TANDOOR_URL || "http://localhost").replace(/\/$/, "");
 // Only what the page calls, so another site open in the browser can't use the token through this proxy
 const ALLOWED = [
   ["GET", /^\/api\/(shopping-list-entry|unit|unit-conversion|food|supermarket-category)\/$/],
-  ["POST", /^\/api\/(shopping-list-entry|shopping-list-entry\/bulk|food|supermarket-category|shopping-list-recipe)\/$/],
-  ["PATCH", /^\/api\/shopping-list-entry\/\d+\/$/],
-  ["DELETE", /^\/api\/(shopping-list-entry|shopping-list-recipe)\/\d+\/$/],
+  ["GET", /^\/api\/food\/\d+\/$/],
+  ["POST", /^\/api\/(shopping-list-entry|shopping-list-entry\/bulk|food|supermarket-category|shopping-list-recipe|unit|unit-conversion)\/$/],
+  ["PATCH", /^\/api\/(shopping-list-entry|food|unit|unit-conversion)\/\d+\/$/],
+  ["DELETE", /^\/api\/(shopping-list-entry|shopping-list-recipe|unit-conversion)\/\d+\/$/],
 ];
 const HOST = `127.0.0.1:${PORT}`;
 const CSRF = "dev";

@@ -1,7 +1,7 @@
 // Turns Tandoor shopping entries into what the phone page shows: aisles of food rows, each with
 // the buy amount (buy.js) and the recipe amounts. Pure, so test/list.test.js covers it; app.js only draws.
 
-import { BY_WEIGHT_MARKER, buyChip, buyPackageKey, hasMarker } from "./buy.js";
+import { buyChip, buyPackageKey, byWeightOf } from "./buy.js";
 import { isChange } from "./edit.js";
 
 export const OTHER_AISLE = "Other";
@@ -87,25 +87,25 @@ export function listSources(entries) {
     .map(({ foods, ...s }) => ({ ...s, left: [...foods.values()].filter(done => !done).length }));
 }
 
-const chipFor = (entries, food, packages) => buyChip(
+const chipFor = (entries, food, packages, weighs) => buyChip(
   entries.map(e => ({ amount: e.amount, unitName: e.unit?.name ?? null, unitBaseUnit: e.unit?.base_unit ?? null, checked: e.checked })),
-  hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER),
+  byWeightOf(food, weighs),
   packages[buyPackageKey(food.name)] ?? null,
 );
 const joined = amounts => amounts.map(a => a.text).join(" + ");
 
 /**
  * One row per food: {key, name, ids, done, buy, amounts, sub, edited, sources, was, gone}. `packages` comes from
- * packagesFrom. A row changed on the phone (edit.js) is `edited`, and `was` says what it was before.
+ * packagesFrom, `weighs` from weighsFrom. A row changed on the phone (edit.js) is `edited`, and `was` says what it was before.
  */
-export function foodRow(entries, packages) {
+export function foodRow(entries, packages, weighs = {}) {
   const food = entries[0].food;
   const originals = entries.filter(e => !isChange(e));
   const edited = originals.length < entries.length;
   // once an amount is set on the phone, an unmeasured original ("some") adds nothing to say
   const amounts = recipeAmounts(edited ? entries.filter(e => isChange(e) || e.amount !== 0 || e.unit) : entries);
   const plural = amounts.some(a => a.sum > 1) && food.plural_name?.trim();
-  const chip = chipFor(entries, food, packages);
+  const chip = chipFor(entries, food, packages, weighs);
   const before = originals.length ? joined(recipeAmounts(originals)).replace(/^some$/, "") : "";
   const fromRecipes = originals.length > 0 && originals.every(e => e.list_recipe_data?.recipe != null);
   return {
@@ -123,12 +123,12 @@ export function foodRow(entries, packages) {
     edited,
     // which recipes (or "added") want it, and how much each: the recipe chips filter on these
     sources: rowSources(entries),
-    was: edited ? (originals.length ? chipFor(originals, food, packages)?.label || before || "no amount" : "no amount") : null,
+    was: edited ? (originals.length ? chipFor(originals, food, packages, weighs)?.label || before || "no amount" : "no amount") : null,
   };
 }
 
 /** Aisles ({name, rows, left}) in name order with Other last; rows in food name order. */
-export function shoppingAisles(entries, packages) {
+export function shoppingAisles(entries, packages, weighs = {}) {
   const byFood = new Map();
   for (const e of entries) {
     if (!e.food) continue; // Tandoor allows an entry without a food; there's nothing to show for it
@@ -139,7 +139,7 @@ export function shoppingAisles(entries, packages) {
   for (const list of byFood.values()) {
     const name = list[0].food.supermarket_category?.name || OTHER_AISLE;
     if (!aisles.has(name)) aisles.set(name, []);
-    const row = foodRow(list, packages);
+    const row = foodRow(list, packages, weighs);
     if (!row.gone) aisles.get(name).push(row);
   }
   const order = (a, b) => (a === OTHER_AISLE) - (b === OTHER_AISLE) || a.localeCompare(b);

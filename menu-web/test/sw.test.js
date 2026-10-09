@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 import { shellFiles, swVersion, writtenVersion } from "../sw-version.js";
 
 test("the service worker caches every file the page loads", () => {
   for (const f of shellFiles()) assert.ok(existsSync(new URL(`../public/${f}`, import.meta.url)), f);
-  for (const f of ["index.html", "app.js", "api.js", "buy.js", "list.js", "sync.js", "queue.js", "parse.js", "foods.js", "edit.js", "actions.js", "app.css", "manifest.json"])
+  // every module (a missing one breaks the page offline), less the service worker itself
+  const modules = readdirSync(new URL("../public/", import.meta.url)).filter(f => f.endsWith(".js") && f !== "sw.js");
+  for (const f of ["index.html", ...modules, "app.css", "manifest.json"])
     assert.ok(shellFiles().includes(f), `${f} missing from SHELL in sw.js`);
 });
 

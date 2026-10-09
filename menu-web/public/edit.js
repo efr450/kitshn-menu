@@ -4,7 +4,7 @@
 // difference, and the tablet, which adds a food's entries up per unit, shows the new total unchanged.
 // Pure, so test/edit.test.js covers it; app.js sends what plan() and change() say.
 
-import { buyPackageKey, gramsPerUnit, hasMarker, BY_WEIGHT_MARKER } from "./buy.js";
+import { buyPackageKey, byWeightOf, gramsPerUnit } from "./buy.js";
 
 export const EDIT_LIST = "Changed by hand";
 const GRAMS_PER_LB = 453.592;
@@ -33,12 +33,12 @@ const sameUnit = (a, b) => (a?.id ?? null) === (b?.id ?? null);
  *    "unit": in the row's one unit, "add": no amount yet (pick a unit from `choices`), null: mixed units.
  *  - value: the amount now, in that kind's units; was: the same before any change (null if none).
  *  - changes: the EDIT_LIST entries now on the row.
- * `units` are Tandoor's units (for grams and the package unit).
+ * `units` are Tandoor's units (for grams and the package unit); `weighs` comes from weighsFrom.
  */
-export function plan(entries, packages, units) {
+export function plan(entries, packages, units, weighs = {}) {
   const food = entries[0].food;
   const pkg = packages[buyPackageKey(food.name)] ?? null;
-  const byWeight = hasMarker(food.supermarket_category?.description, BY_WEIGHT_MARKER);
+  const byWeight = byWeightOf(food, weighs);
   const changes = entries.filter(isChange);
   const now = counted(entries).filter(e => e.amount !== 0);
   const before = counted(entries).filter(e => !isChange(e) && e.amount !== 0);
