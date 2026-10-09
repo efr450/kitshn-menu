@@ -22,12 +22,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import de.kitshn.BackHandler
 
-// Menu fork: the page's window.MenuApp (menu-web/public/inbox.js appBridge). It answers only while
+// Menu fork: the page's window.MenuApp (menu-web/public/inbox.js appBridge): lends the sign-in, opens recipes. It answers only while
 // the web view shows the page's own origin; other origins never load in it (shouldOverrideUrlLoading).
 private class InboxBridge(
     private val view: WebView,
     private val pageUrl: () -> String,
-    private val token: () -> String?,
+    private val auth: () -> String?,
     private val onRecipe: (Int) -> Unit
 ) {
     private val main = Handler(Looper.getMainLooper())
@@ -42,7 +42,7 @@ private class InboxBridge(
     }
 
     @JavascriptInterface
-    fun token(): String? = if(onPage()) token.invoke() else null
+    fun auth(): String? = if(onPage()) auth.invoke() else null
 
     @JavascriptInterface
     fun openRecipe(id: Int) {
@@ -52,10 +52,10 @@ private class InboxBridge(
 
 @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
 @Composable
-actual fun InboxPage(url: String, load: Int, token: () -> String?, onRecipe: (Int) -> Unit, onBack: () -> Unit) {
+actual fun InboxPage(url: String, load: Int, auth: () -> String?, onRecipe: (Int) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val currentUrl by rememberUpdatedState(url)
-    val currentToken by rememberUpdatedState(token)
+    val currentAuth by rememberUpdatedState(auth)
     val currentOnRecipe by rememberUpdatedState(onRecipe)
     var webView by remember { mutableStateOf<WebView?>(null) }
     var loaded by remember { mutableStateOf<Pair<String, Int>?>(null) }
@@ -85,7 +85,7 @@ actual fun InboxPage(url: String, load: Int, token: () -> String?, onRecipe: (In
                     }
                 }
                 addJavascriptInterface(
-                    InboxBridge(this, { currentUrl }, { currentToken() }, { currentOnRecipe(it) }),
+                    InboxBridge(this, { currentUrl }, { currentAuth() }, { currentOnRecipe(it) }),
                     "MenuApp"
                 )
                 webView = this

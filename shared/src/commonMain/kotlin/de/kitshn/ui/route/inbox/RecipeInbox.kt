@@ -24,6 +24,17 @@ fun inboxPageUrl(instanceUrl: String, shared: String? = null): String {
     return if(shared.isNullOrBlank()) base else base + "?url=" + shared.encodeURLParameter()
 }
 
+/**
+ * The app's Tandoor sign-in as the page's Authorization value: "Bearer <token>" when it signed in
+ * with a token, "Session <sessionid>" when it signed in with a password (kept as a cookie), else null.
+ */
+fun inboxAuth(token: String?, cookie: String?): String? {
+    if(!token.isNullOrBlank()) return "Bearer $token"
+    // only what inbox.py accepts, so an odd cookie means "sign in again" here, not a puzzling 401 there
+    val sid = Regex("""(?:^|;\s*)sessionid=([\w.-]{20,200})(?:;|$)""").find(cookie ?: "")?.groupValues?.get(1)
+    return sid?.let { "Session $it" }
+}
+
 /** Whether the web view may load [url] itself: only the page's own origin; anything else goes to the browser. */
 fun inboxKeepsInApp(pageUrl: String, url: String): Boolean = origin(url) == origin(pageUrl)
 
@@ -49,13 +60,13 @@ fun RouteRecipeInbox(p: RouteParameters) {
     InboxPage(
         url = page,
         load = loads,
-        token = { p.vm.tandoorClient?.credentials?.token?.token },
+        auth = { p.vm.tandoorClient?.credentials?.let { inboxAuth(it.token?.token, it.cookie) } },
         onRecipe = { p.vm.viewRecipe(it) },
         onBack = { p.onBack?.invoke() }
     )
 }
 
 /** The page in a web view (Android); elsewhere, the browser. A new [load] number reloads [url];
- *  [token] is read on every request. */
+ *  [auth] (an Authorization value, see [inboxAuth]) is read on every request. */
 @Composable
-expect fun InboxPage(url: String, load: Int, token: () -> String?, onRecipe: (Int) -> Unit, onBack: () -> Unit)
+expect fun InboxPage(url: String, load: Int, auth: () -> String?, onRecipe: (Int) -> Unit, onBack: () -> Unit)

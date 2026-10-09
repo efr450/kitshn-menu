@@ -1,10 +1,12 @@
 package de.kitshn
 
+import de.kitshn.ui.route.inbox.inboxAuth
 import de.kitshn.ui.route.inbox.inboxKeepsInApp
 import de.kitshn.ui.route.inbox.inboxPageUrl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RecipeInboxTest {
@@ -37,5 +39,15 @@ class RecipeInboxTest {
         assertFalse(inboxKeepsInApp(page, "https://server.home:8092/shop/add/"))
         assertFalse(inboxKeepsInApp(page, "https://www.budgetbytes.com/x/"))
         assertFalse(inboxKeepsInApp(page, "http://server.home:8092@evil.test/"))
+    }
+
+    @Test
+    fun theAppLendsItsTokenElseItsSession() {
+        assertEquals("Bearer abc", inboxAuth("abc", "sessionid=zzz"))
+        assertEquals("Session abcdefghij0123456789xyz", inboxAuth(null, "csrftoken=x; sessionid=abcdefghij0123456789xyz; other=y"))
+        assertEquals("Session abcdefghij0123456789xyz", inboxAuth("", "sessionid=abcdefghij0123456789xyz"))
+        assertNull(inboxAuth(null, "sessionid=\"quoted0123456789abcdef\""))
+        assertNull(inboxAuth(null, "csrftoken=x"))
+        assertNull(inboxAuth(null, null))
     }
 }
