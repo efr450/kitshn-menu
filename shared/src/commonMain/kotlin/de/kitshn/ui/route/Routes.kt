@@ -15,6 +15,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import de.kitshn.ui.route.alerts.RouteAlertInaccessibleInstance
 import de.kitshn.ui.route.alerts.RouteAlertOutdatedV1Instance
+import de.kitshn.ui.route.inbox.RouteRecipeInbox
 import de.kitshn.ui.route.main.RouteMain
 import de.kitshn.ui.route.onboarding.RouteOnboarding
 import de.kitshn.ui.route.onboarding.RouteOnboardingSignIn
@@ -50,6 +51,9 @@ val routes = listOf(
         "recipe/{recipeId}/public/{shareToken}",
         Animation.SLIDE_HORIZONTAL
     ) { RouteRecipePublic(p = it) },
+
+    // Menu fork: Add/Monitor Recipe (the recipe inbox page)
+    Route("recipeInbox", Animation.SLIDE_VERTICAL) { RouteRecipeInbox(p = it) },
 
     Route(
         "shopping/shoppingMode",

@@ -2,9 +2,12 @@
 // it), pick Add now or Show me the preview first, and Claude imports it at home. Rules live in
 // ../inbox.js; this file only draws and listens.
 
-import { Draft, MODES, STAGES, active, inboxApi, keyBytes, nextActions, pill, progress, sharedLink } from "../inbox.js";
+import { Draft, MODES, STAGES, active, appBridge, inboxApi, keyBytes, nextActions, pill, progress, recipeIdOf, sharedLink } from "../inbox.js";
 
-const api = inboxApi();
+const app = appBridge();   // the Menu app, when this page runs inside it
+const api = inboxApi({ bridge: app });
+// the app has its own shopping list; the phone page's needs the Tailscale address
+if (app) document.querySelector('a.pill.link[href="/shop/"]')?.remove();
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 const btn = (cls, text, onClick) => { const b = el("button", cls, text); b.type = "button"; b.addEventListener("click", e => { e.stopPropagation(); onClick(e); }); return b; };
@@ -27,7 +30,9 @@ function say(text) {
 }
 function trouble(e) {
   if (e.kind === "signin") {
-    const n = $("note"); n.replaceChildren("Tandoor needs you to sign in first. ", Object.assign(el("a", null, "Sign in"), { href: "/accounts/login/?next=/shop/add/" }));
+    const n = $("note");
+    if (app) n.replaceChildren("Tandoor did not accept the Menu app's sign-in. Sign out and in again in Settings.");
+    else n.replaceChildren("Tandoor needs you to sign in first. ", Object.assign(el("a", null, "Sign in"), { href: "/accounts/login/?next=/shop/add/" }));
     n.hidden = false;
   } else say(e.kind === "offline" ? "No signal. Try again in a moment." : e.message);
 }
@@ -229,7 +234,12 @@ function dock() {
   if (j.message) box.append(el("p", "claude", j.message));
   if (j.state === "done") {
     const line = el("p", "done", "✓ Added · ");
-    if (j.link) line.append(Object.assign(el("a", null, "Open recipe"), { href: j.link, target: "_blank", rel: "noopener" }));
+    if (j.link) {
+      const a = Object.assign(el("a", null, "Open recipe"), { href: j.link, target: "_blank", rel: "noopener" });
+      const id = recipeIdOf(j.link);
+      if (app && id != null) a.addEventListener("click", e => { e.preventDefault(); app.openRecipe(id); });
+      line.append(a);
+    }
     box.append(line);
     (j.assumptions || []).forEach((a, n) => {
       const key = `assume ${n}`, row = el("div", "assume");

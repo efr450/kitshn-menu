@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8090:80"
+      # Menu fork: the tablet (LAN only, no Tailscale) opens http://server.home:8092/shop/add/ in the Menu app
+      - "8092:80"
     volumes:
       - ./public:/usr/share/nginx/html:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro

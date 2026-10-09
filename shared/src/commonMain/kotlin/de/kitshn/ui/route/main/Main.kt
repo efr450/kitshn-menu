@@ -2,6 +2,7 @@ package de.kitshn.ui.route.main
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
@@ -136,6 +137,14 @@ fun RouteMain(p: RouteParameters) {
                 label = { Text(text = "Claude", maxLines = 1) },
                 selected = false,
                 onClick = { openKitchen(kitchenUrl(instanceUrl)) }
+            )
+
+            // Menu fork: Add/Monitor Recipe, the recipe inbox page in a web view (ui/route/inbox)
+            if(isOnline) item(
+                icon = { Icon(Icons.Outlined.PostAdd, contentDescription = "Add/Monitor Recipe") },
+                label = { Text(text = "Add/Monitor", maxLines = 1) },
+                selected = false,
+                onClick = { p.vm.navigateTo("recipeInbox") }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer

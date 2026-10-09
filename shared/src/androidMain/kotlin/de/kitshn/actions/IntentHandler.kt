@@ -28,11 +28,12 @@ fun KitshnViewModel.handleIntent(intent: Intent) {
     if(handleShortcut(intent)) return
     if(handleAppLink(intent)) return
 
-    // handle recipe url sharing
+    // Menu fork: a shared recipe link goes to Add/Monitor Recipe (the recipe inbox), where Claude
+    // imports it; Tandoor's own importer stays under Home's + button.
     if(intent.action == Intent.ACTION_SEND) {
         (text.extractUrl() ?: text.extractUrl("\n"))?.let { url ->
-            navigateTo("main", "home")
-            uiState.importRecipeUrl.set(url)
+            navigateTo("recipeInbox")
+            uiState.inboxShareUrl.set(url)
         }
     }
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Draft, inboxApi, keyBytes, nextActions, pill, progress, sharedLink } from "../public/inbox.js";
+import { Draft, appBridge, inboxApi, keyBytes, nextActions, pill, progress, recipeIdOf, sharedLink } from "../public/inbox.js";
 
 test("a shared link comes from url, else the first link in the shared text", () => {
   assert.equal(sharedLink(new URLSearchParams({ url: "https://a.test/r" })), "https://a.test/r");
@@ -55,4 +55,26 @@ test("the API posts JSON and turns a missing session into a sign-in", async () =
 
 test("the VAPID key decodes from base64url", () => {
   assert.deepEqual([...keyBytes("AQID_-8")], [1, 2, 3, 255, 239]);
+});
+
+test("inside the Menu app the API sends the app's token", async () => {
+  const calls = [];
+  const fetchFn = async (url, init) => { calls.push(init); return { ok: true, status: 200, json: async () => ({ jobs: [] }) }; };
+  await inboxApi({ fetchFn, bridge: { token: () => "abc", openRecipe() {} } }).jobs();
+  assert.equal(calls[0].headers.Authorization, "Bearer abc");
+  await inboxApi({ fetchFn, bridge: null }).jobs();
+  assert.equal(calls[1].headers.Authorization, undefined);
+  await assert.rejects(inboxApi({ fetchFn, bridge: { token: () => null, openRecipe() {} } }).jobs(), e => e.kind === "signin");
+  assert.equal(calls.length, 2);
+});
+
+test("the app bridge needs both calls; recipe ids come from Tandoor links", () => {
+  assert.equal(appBridge({}), null);
+  assert.equal(appBridge({ MenuApp: { token: () => "t" } }), null);
+  assert.ok(appBridge({ MenuApp: { token: () => "t", openRecipe() {} } }));
+  assert.equal(recipeIdOf("https://server.tail2d7086.ts.net/recipe/29/"), 29);
+  assert.equal(recipeIdOf("http://server.home/recipe/7"), 7);
+  assert.equal(recipeIdOf("https://server.tail2d7086.ts.net/recipe/29/?x=1"), 29);
+  assert.equal(recipeIdOf("https://site.test/recipe/29-chili-tofu/"), null);
+  assert.equal(recipeIdOf(undefined), null);
 });

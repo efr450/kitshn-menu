@@ -81,7 +81,7 @@ android {
             manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
             manifestPlaceholders["appIconRound"] = "@mipmap/ic_launcher_round"
 
-            versionNameSuffix = "-menu.19"
+            versionNameSuffix = "-menu.20"
 
             isMinifyEnabled = true
             isShrinkResources = true

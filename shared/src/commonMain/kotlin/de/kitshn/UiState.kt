@@ -37,6 +37,7 @@ class UiStateModel : ViewModel() {
     var userDisplayName by mutableStateOf("")
 
     var importRecipeUrl = UiStateLink<String>()
+    var inboxShareUrl = UiStateLink<String>() // Menu fork: a link shared to Menu, for Add/Monitor Recipe
     var searchKeyword = UiStateLink<Int>()
     var searchCreatedBy = UiStateLink<Int>()
     var viewRecipe = UiStateLink<Int>()

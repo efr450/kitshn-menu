@@ -66,12 +66,29 @@ export function nextActions(job, draft) {
     : [{ action: "add", label: "Looks good · Add to Menu" }];
 }
 
-/** The inbox server's API. @param fetchFn fetch, injectable for tests */
-export function inboxApi({ fetchFn = (...a) => fetch(...a) } = {}) {
+/** The Menu Android app, when it hosts this page in its web view: it lends its Tandoor token
+ *  (token()) and opens recipes itself (openRecipe(id)). Null in a browser. */
+export function appBridge(g = globalThis) {
+  const b = g.MenuApp;
+  return b && typeof b.token === "function" && typeof b.openRecipe === "function" ? b : null;
+}
+
+/** The Tandoor recipe id in a recipe link (".../recipe/29/"), or null. */
+export function recipeIdOf(link) {
+  const m = /\/recipe\/(\d+)\/?(?:[?#]|$)/.exec(link || "");
+  return m ? Number(m[1]) : null;
+}
+
+/** The inbox server's API. @param fetchFn fetch, injectable for tests @param bridge the app, if any */
+export function inboxApi({ fetchFn = (...a) => fetch(...a), bridge = appBridge() } = {}) {
   async function call(path, init = {}) {
     let r;
+    const token = bridge && bridge.token();
+    // in the app, no token means it was busy or signed out; a cookie fallback would only fail as "wrong origin"
+    if (bridge && !token) throw failure("signin", "no token from the app");
+    const auth = token ? { Authorization: `Bearer ${token}` } : {};
     try {
-      r = await fetchFn(BASE + path, { credentials: "same-origin", ...init, headers: { Accept: "application/json", ...init.headers } });
+      r = await fetchFn(BASE + path, { credentials: "same-origin", ...init, headers: { Accept: "application/json", ...auth, ...init.headers } });
     } catch (e) {
       throw failure("offline", e.message);
     }
