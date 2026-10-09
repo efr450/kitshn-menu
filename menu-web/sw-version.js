@@ -10,7 +10,8 @@ const SW = fileURLToPath(new URL("./public/sw.js", import.meta.url));
 
 export function shellFiles(swSource = readFileSync(SW, "utf8")) {
   const list = /const SHELL = \[([\s\S]*?)\];/.exec(swSource)[1];
-  return [...list.matchAll(/"\/shop\/([^"]*)"/g)].map(m => m[1] || "index.html");
+  // a folder ("/shop/", "/shop/add/") is its index.html
+  return [...list.matchAll(/"\/shop\/([^"]*)"/g)].map(m => m[1] === "" || m[1].endsWith("/") ? `${m[1]}index.html` : m[1]);
 }
 
 export function swVersion() {

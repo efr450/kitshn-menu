@@ -1,0 +1,67 @@
+/* Menu fork: the Add recipe page (Workbench "recipe-inbox", option B1). app.css gives the theme, the
+   header, the note and the toast; this adds the job list, the share sheet and the full preview. */
+.top .link { text-decoration: none; background: var(--chip); color: var(--fg); }
+.paste { flex-basis: 100%; display: flex; gap: 8px; }
+.paste input { flex: 1; min-width: 0; background: var(--row); color: var(--fg); border: 1px solid var(--chip); border-radius: 12px; padding: 11px 12px; font: inherit; }
+.go, .btn { border: 0; cursor: pointer; border-radius: 99px; padding: 11px 18px; font-weight: 500; background: var(--gold); color: #2a2208; text-align: center; text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+.btn.quiet { background: transparent; color: var(--muted); border: 1px solid var(--chip); }
+.btn:disabled { opacity: .45; }
+.job { display: flex; gap: 12px; align-items: center; background: var(--row); border-radius: 14px; padding: 10px; cursor: pointer; }
+.job > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.thumb { width: 64px; height: 64px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, #a8642a, #e0a95a 45%, #6e8a3c) center / cover; }
+.title { font: 400 1.05rem/1.25 Georgia, "Playfair Display", serif; margin: 0; overflow: hidden; text-overflow: ellipsis; }
+.meta { font-size: 12px; color: var(--muted); }
+.tag { align-self: flex-start; font-size: 12px; border-radius: 99px; padding: 2px 9px; background: var(--chip); white-space: nowrap; }
+.tag.ask { background: var(--warn-bg); color: var(--warn); }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+.tag.bad { background: #4a1f1a; color: #f2a79c; }
+.bar { height: 4px; border-radius: 99px; background: var(--chip); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--gold); transition: width .6s; }
+/* the share sheet */
+.shade { position: fixed; inset: 0; z-index: 6; background: #000a; display: flex; align-items: flex-end; }
+.sharesheet { background: var(--menu); width: 100%; border-radius: 20px 20px 0 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0)); display: flex; flex-direction: column; gap: 10px; }
+.grip { width: 40px; height: 4px; border-radius: 99px; background: var(--chip); align-self: center; }
+.sharesheet .why { text-align: center; font-size: 12px; color: var(--muted); margin: -4px 0 4px; }
+/* the full preview */
+.full { position: fixed; inset: 0; z-index: 5; background: var(--bg); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0); }
+.back { border: 0; background: none; color: var(--gold); text-align: left; padding: 12px 16px; cursor: pointer; }
+.scroll { flex: 1; overflow: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.part { border-radius: 12px; cursor: pointer; position: relative; }
+.part:active { background: var(--row); }
+.part.changed { box-shadow: inset 3px 0 0 #6f9a63; background: #23361f55; }
+.part .upd { font-size: 11px; color: var(--ok); }
+.photo { min-height: 160px; border-radius: 14px; background: linear-gradient(135deg, #a8642a, #e0a95a 45%, #6e8a3c) center / cover; }
+.full h2 { font: 400 1.5rem/1.2 Georgia, "Playfair Display", serif; margin: 0; }
+.desc { color: var(--muted); font-size: 14px; padding: 4px; }
+.sec { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); padding: 8px 4px 0; display: flex; justify-content: space-between; }
+.sec span:last-child { color: var(--muted); letter-spacing: 0; text-transform: none; }
+.ings { padding: 4px; }
+.ing { display: grid; grid-template-columns: 64px 1fr; gap: 8px; padding: 5px 0; border-bottom: 1px solid #2c2618; font-size: 14px; }
+.ing b { font-weight: 500; color: var(--gold); text-align: right; }
+.ing small { color: var(--muted); }
+.step { display: grid; grid-template-columns: 22px 1fr; gap: 2px 10px; padding: 8px 4px; font-size: 14px; white-space: pre-line; }
+.step b { color: var(--gold); font-weight: 500; }
+.step em { font-style: normal; color: var(--gold); display: block; }
+.mine { margin: 4px 4px 0 32px; font-size: 13px; background: var(--chip); border-radius: 10px; padding: 6px 10px; display: flex; gap: 8px; justify-content: space-between; }
+.mine button { border: 0; background: none; color: var(--muted); cursor: pointer; }
+.say { display: flex; gap: 6px; margin: 6px 4px 4px; }
+.say input, .other input { flex: 1; min-width: 0; background: var(--row); color: var(--fg); border: 1px solid var(--chip); border-radius: 99px; padding: 9px 12px; font: inherit; font-size: 14px; }
+.hint { font-size: 12px; color: var(--muted); text-align: center; }
+/* the dock: questions one at a time, then what to do */
+.dock { background: var(--menu); padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0)); border-radius: 18px 18px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.dock p { margin: 0; }
+.dock .q { font-size: 15px; }
+.dock .from { font-size: 12px; color: var(--muted); }
+.claude { font-size: 13px; background: var(--ok-bg); color: #cfe8c9; border-radius: 12px; padding: 7px 11px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { border: 1px solid var(--chip); background: none; border-radius: 99px; padding: 8px 13px; cursor: pointer; font-size: 14px; }
+.opt.rec { border-color: var(--gold); }
+.opt.rec::after { content: " ★"; color: var(--gold); }
+.other { display: flex; gap: 6px; }
+.row2 { display: flex; gap: 8px; }
+.row2 > * { flex: 1; }
+.assume { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; }
+.done { color: var(--ok); }
+.done a { color: var(--gold); }
+.bad { color: #f2a79c; }

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#17140c">
+  <title>Add a recipe</title>
+  <link rel="manifest" href="/shop/manifest.json">
+  <link rel="icon" href="/shop/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/shop/app.css">
+  <link rel="stylesheet" href="/shop/add/add.css">
+  <script type="module" src="/shop/add/add.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>Recipes to add</h1>
+    <button class="pill" id="bell" type="button" hidden>🔔 Notify me</button>
+    <a class="pill link" href="/shop/">Shopping</a>
+    <form class="paste" id="paste">
+      <input id="link" type="url" inputmode="url" placeholder="Paste a recipe link" autocomplete="off" aria-label="Recipe link">
+      <button class="go" type="submit">Add</button>
+    </form>
+  </header>
+  <p class="note" id="note" hidden></p>
+  <main id="jobs"></main>
+  <div id="layer"></div>
+  <p class="toast" id="toast" role="status" hidden></p>
+</body>
+</html>
