@@ -4,7 +4,7 @@
 // test/sw.test.js fails when it's stale. A changed VERSION makes phones fetch the new set; the next
 // open shows it. Tandoor's /api/ requests pass straight through (sync.js keeps the list).
 
-const VERSION = "785c350c18b6";
+const VERSION = "dcec8b1d8286";
 const CACHE = `menu-shop-${VERSION}`;
 const SHELL = ["/shop/", "/shop/app.css", "/shop/app.js", "/shop/api.js", "/shop/buy.js", "/shop/list.js",
   "/shop/sync.js", "/shop/snapshot.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/manifest.json", "/shop/icon.svg", "/shop/icon-192.png", "/shop/icon-512.png"];
