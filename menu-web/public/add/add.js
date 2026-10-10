@@ -1,8 +1,8 @@
 // Menu fork: the Add recipe page. Share a link (Android's Share menu, the iPhone Shortcut, or paste
-// it), pick Add now or Show me the preview first, and Claude imports it at home. Rules live in
-// ../inbox.js; this file only draws and listens.
+// it) or type a recipe of your own, pick Add now or Show me the preview first, and Claude imports or
+// writes it at home. Rules live in ../inbox.js; this file only draws and listens.
 
-import { Draft, MODES, STAGES, active, appBridge, inboxApi, keyBytes, nextActions, pill, progress, recipeIdOf, sharedLink } from "../inbox.js";
+import { Draft, MODES, STAGES, active, appBridge, inboxApi, keyBytes, nextActions, pasted, pill, progress, recipeIdOf, sharedLink } from "../inbox.js";
 
 const app = appBridge();   // the Menu app, when this page runs inside it
 const api = inboxApi({ bridge: app });
@@ -15,7 +15,7 @@ const bg = (node, src) => { if (src && /^https:\/\//.test(src)) node.style.backg
 const ago = s => { const m = Math.round((Date.now() / 1000 - s) / 60); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : new Date(s * 1000).toLocaleDateString(); };
 
 let jobs = [];
-let share = null;          // {url}: the sheet asking Add now or Show me the preview first
+let share = null;          // {url} or {written}: the sheet asking Add now or Show me the preview first
 let open = null;           // the job shown full screen: its server view
 let editing = null;        // the part being commented on ("photo", "step 2", "assume 0", ...)
 let otherFor = null;       // the question whose "Other…" box is open
@@ -56,12 +56,12 @@ async function refresh() {
 }
 
 async function start(mode) {
-  const url = share.url;
+  const source = share;
   share = null;
   draw();
   try {
-    const job = await api.add(url, mode);
-    $("link").value = "";
+    const job = await api.add(source, mode);
+    $("link").value = ""; fit();
     say(mode === "look" ? "Started. We'll let you know when the preview is ready." : "Started. We'll let you know if it needs you.");
     if (job.id) jobs = [job, ...jobs.filter(j => j.id !== job.id)];
   } catch (e) { trouble(e); }
@@ -110,7 +110,7 @@ function bell() {
 function jobRow(j) {
   const p = pill(j);
   const info = el("div");
-  info.append(el("p", "title", j.title || j.host), el("span", `tag ${p.kind}`, p.text));
+  info.append(el("p", "title", j.title || j.host || "Your recipe"), el("span", `tag ${p.kind}`, p.text));
   if (active(j)) { const bar = el("div", "bar"), i = el("i"); i.style.width = `${Math.round(progress(j) * 100)}%`; bar.append(i); info.append(bar); }
   info.append(el("span", "meta", `${j.by} · ${ago(j.created)}`));
   const row = el("div", "job");
@@ -124,16 +124,21 @@ function jobRow(j) {
 
 function drawList() {
   const box = $("jobs");
-  box.replaceChildren(...(jobs.length ? jobs.map(jobRow) : [el("p", "empty", "Share a recipe from any app, or paste a link above.")]));
+  box.replaceChildren(...(jobs.length ? jobs.map(jobRow) : [el("p", "empty", "Share a recipe from any app, paste a link above, or type your own.")]));
 }
 
 function sheet() {
   const shade = el("div", "shade");
   shade.addEventListener("click", e => { if (e.target === shade) { share = null; draw(); } });
   const s = el("div", "sharesheet");
-  let host = share.url;
-  try { host = new URL(share.url).hostname.replace(/^www\./, ""); } catch { /* shown as typed */ }
-  s.append(el("div", "grip"), el("p", "title", host),
+  if (share.written) s.append(el("div", "grip"), el("p", "title", "Your recipe"), el("p", "typed", share.written),
+    el("p", "why", "Claude writes it as you told it and asks about anything missing"));
+  else {
+    let host = share.url;
+    try { host = new URL(share.url).hostname.replace(/^www\./, ""); } catch { /* shown as typed */ }
+    s.append(el("div", "grip"), el("p", "title", host));
+  }
+  s.append(
     btn("btn", MODES.now, () => start("now")), el("p", "why", "Asks only what it must, and tells you what it assumed"),
     btn("btn ghost", MODES.look, () => start("look")), el("p", "why", "See the whole recipe, comment on any part, answer Claude's questions"),
     el("p", "why", "You can close this. We'll notify you when it needs you."));
@@ -270,7 +275,7 @@ function full() {
   scroll.dataset.job = open.id;
   f.append(btn("back", "‹ Back", () => { open = null; editing = null; draw(); }));
   if (open.recipe) scroll.append(...preview(open.recipe));
-  else scroll.append(el("h2", null, open.title || open.host), el("p", "hint", open.state === "ask" ? "" : "The recipe shows here once Claude has written it."));
+  else scroll.append(el("h2", null, open.title || open.host || "Your recipe"), el("p", "hint", open.state === "ask" ? "" : "The recipe shows here once Claude has written it."));
   f.append(scroll, dock());
   return f;
 }
@@ -302,8 +307,15 @@ function draw() {
 
 $("paste").addEventListener("submit", e => {
   e.preventDefault();
-  const url = sharedLink(new URLSearchParams({ text: $("link").value }));
-  if (url) { share = { url }; draw(); } else say("That doesn't look like a link.");
+  const got = pasted($("link").value);
+  if (got) { share = got; draw(); } else say("Paste a recipe link, or tell Claude a little more about your recipe.");
+});
+// the box grows with what's typed; Enter adds a pasted link, and starts a new line in a recipe
+function fit() { const t = $("link"); t.style.height = "auto"; t.style.height = `${t.scrollHeight + 2}px`; }
+$("link").addEventListener("input", fit);
+fit();
+$("link").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing && pasted(e.target.value)?.url) { e.preventDefault(); $("paste").requestSubmit(); }
 });
 
 const params = new URLSearchParams(location.search);

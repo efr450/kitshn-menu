@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Draft, appBridge, inboxApi, keyBytes, nextActions, pill, progress, recipeIdOf, sharedLink } from "../public/inbox.js";
+import { Draft, appBridge, inboxApi, keyBytes, nextActions, pasted, pill, progress, recipeIdOf, sharedLink } from "../public/inbox.js";
+
+test("the link box takes a link, or a recipe in your own words", () => {
+  assert.deepEqual(pasted("  https://a.test/r "), { url: "https://a.test/r" });
+  assert.deepEqual(pasted("Make this tonight! https://b.test/x"), { url: "https://b.test/x" });
+  assert.deepEqual(pasted("Chicken Tikka Masala Recipe - NYT Cooking https://cooking.nytimes.com/recipes/1"), { url: "https://cooking.nytimes.com/recipes/1" });
+  assert.deepEqual(pasted("Check out this recipe I found on Allrecipes: Best Chocolate Chip Cookies https://a.test/c"), { url: "https://a.test/c" });
+  assert.deepEqual(pasted("Sweet potato hash\n2 sweet potatoes, 1 onion, 4 eggs; fry"), { written: "Sweet potato hash\n2 sweet potatoes, 1 onion, 4 eggs; fry" });
+  const long = "Grandma's chili, like https://c.test/chili\nbut twice the beans, no beef, an hour on low";
+  assert.deepEqual(pasted(long), { written: long });
+  assert.equal(pasted("soup"), null);
+  assert.equal(pasted("   "), null);
+});
 
 test("a shared link comes from url, else the first link in the shared text", () => {
   assert.equal(sharedLink(new URLSearchParams({ url: "https://a.test/r" })), "https://a.test/r");
@@ -43,7 +55,7 @@ test("what the dock offers depends on the mode and on notes", () => {
 test("the API posts JSON and turns a missing session into a sign-in", async () => {
   const calls = [];
   const api = inboxApi({ fetchFn: async (url, init) => { calls.push([url, init]); return { ok: true, status: 201, json: async () => ({ id: "x" }) }; } });
-  await api.add("https://a.test/r", "look");
+  await api.add({ url: "https://a.test/r" }, "look");
   assert.equal(calls[0][0], "/shop/api/inbox/jobs");
   assert.equal(calls[0][1].headers["Content-Type"], "application/json");
   assert.deepEqual(JSON.parse(calls[0][1].body), { url: "https://a.test/r", mode: "look" });

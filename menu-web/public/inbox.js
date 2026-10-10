@@ -18,6 +18,18 @@ export function sharedLink(params) {
   return null;
 }
 
+/**
+ * What was typed into the link box: {url} when it's a link (one line, maybe with a title or a few
+ * words around it, as shares add), {written} when it's a recipe in someone's own words, null when
+ * it's too short to be either.
+ */
+export function pasted(text) {
+  const t = String(text || "").trim();
+  const url = sharedLink(new URLSearchParams({ text: t }));
+  if (url && !t.includes("\n") && t.replace(url, "").trim().length < 100) return { url };
+  return t.length >= 10 ? { written: t } : null;
+}
+
 /** The pill on a job's row. */
 export function pill(job) {
   if (job.state === "queued") return { text: "Waiting its turn", kind: "" };
@@ -111,7 +123,7 @@ export function inboxApi(opts = {}) {
   return {
     jobs: () => call("/jobs"),
     job: id => call(`/jobs/${encodeURIComponent(id)}`),
-    add: (url, mode) => post("/jobs", { url, mode }),
+    add: (source, mode) => post("/jobs", { ...source, mode }),  // source: {url} or {written}
     reply: (id, body) => post(`/jobs/${encodeURIComponent(id)}/reply`, body),
     retry: id => post(`/jobs/${encodeURIComponent(id)}/retry`, {}),
     pushKey: () => call("/push").then(d => d.key),

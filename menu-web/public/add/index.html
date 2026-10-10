@@ -17,9 +17,10 @@
     <button class="pill" id="bell" type="button" hidden>🔔 Notify me</button>
     <a class="pill link" href="/shop/">Shopping</a>
     <form class="paste" id="paste">
-      <input id="link" type="url" inputmode="url" placeholder="Paste a recipe link" autocomplete="off" aria-label="Recipe link">
+      <textarea id="link" rows="1" maxlength="20000" placeholder="Paste a link, or type your own recipe" autocomplete="off" aria-label="Recipe link or your own recipe"></textarea>
       <button class="go" type="submit">Add</button>
     </form>
+    <p class="tip">✍️ Or type a recipe of your own, like “Sweet potato hash: 2 sweet potatoes, an onion, 4 eggs, fry till crisp”. Claude writes it up and asks about anything missing.</p>
   </header>
   <p class="note" id="note" hidden></p>
   <main id="jobs"></main>

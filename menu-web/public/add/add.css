@@ -2,7 +2,10 @@
    header, the note and the toast; this adds the job list, the share sheet and the full preview. */
 .top .link { text-decoration: none; background: var(--chip); color: var(--fg); }
 .paste { flex-basis: 100%; display: flex; gap: 8px; }
-.paste input { flex: 1; min-width: 0; background: var(--row); color: var(--fg); border: 1px solid var(--chip); border-radius: 12px; padding: 11px 12px; font: inherit; }
+.paste textarea { flex: 1; min-width: 0; background: var(--row); color: var(--fg); border: 1px solid var(--chip); border-radius: 12px; padding: 11px 12px; font: inherit; resize: none; line-height: 1.4; min-height: calc(1.4em + 24px); max-height: 320px; overflow-y: auto; box-sizing: border-box; }
+.paste .go { align-self: flex-end; }
+.tip { flex-basis: 100%; margin: 0; font-size: 12px; color: var(--muted); }
+.sharesheet .typed { margin: 0; font-size: 14px; color: var(--muted); white-space: pre-line; max-height: 240px; overflow: auto; flex-shrink: 0; }
 .go, .btn { border: 0; cursor: pointer; border-radius: 99px; padding: 11px 18px; font-weight: 500; background: var(--gold); color: #2a2208; text-align: center; text-decoration: none; }
 .btn.ghost { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
 .btn.quiet { background: transparent; color: var(--muted); border: 1px solid var(--chip); }
