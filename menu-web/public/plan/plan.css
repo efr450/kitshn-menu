@@ -1,6 +1,8 @@
 /* Menu fork: the Plan chat (Workbench "plan-chat", option A "Just the chat"). app.css gives the theme,
    the header, the menu, the note and the toast; this lays the page out as a chat filling the screen. */
-body.chat { height: 100dvh; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
+/* fixed to the viewport, not height: 100dvh: the tablet app's web view measured dvh as 0 and stacked
+   the dock under the header (seen 2026-10-10); inset 0 follows the keyboard the same way */
+body.chat { position: fixed; inset: 0; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
 .top { position: static; flex: none; flex-wrap: nowrap; border-bottom: 1px solid var(--menu); }
 .top h1 { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .who { display: flex; border: 1px solid var(--chip); border-radius: 99px; overflow: hidden; flex: none; }
