@@ -28,6 +28,21 @@ test("the pill says where a job is", () => {
   assert.ok(progress({ state: "running", stage: "checking" }) > progress({ state: "running", stage: "reading" }));
 });
 
+test("Back reopens the question before, remembering its answer", () => {
+  const qs = [{ id: "who" }, { id: "fills" }];
+  const d = new Draft();
+  assert.equal(d.back(qs), null);  // nothing before the first question
+  d.answer("who", "Lindsay");
+  d.answer("fills", "Use these");
+  assert.equal(d.back(qs).id, "fills");  // from the "Anything else?" step
+  assert.equal(d.next(qs).id, "fills");
+  assert.equal(d.was.fills, "Use these");
+  assert.equal(d.back(qs).id, "who");
+  assert.deepEqual([d.next(qs).id, d.was.who, d.answered(qs)], ["who", "Lindsay", 0]);
+  d.answer("who", "Ethan");
+  assert.equal(d.next(qs).id, "fills");
+});
+
 test("a draft walks the questions in order and builds the reply", () => {
   const qs = [{ id: "gf" }, { id: "food" }];
   const d = new Draft();

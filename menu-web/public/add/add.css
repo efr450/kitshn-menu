@@ -61,6 +61,11 @@
 .opt { border: 1px solid var(--chip); background: none; border-radius: 99px; padding: 8px 13px; cursor: pointer; font-size: 14px; }
 .opt.rec { border-color: var(--gold); }
 .opt.rec::after { content: " ★"; color: var(--gold); }
+.opt.picked { background: var(--chip); border-color: var(--fg); }
+.acts { display: flex; flex-direction: column; gap: 10px; }
+.qtop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.qback { border: 0; background: none; color: var(--gold); padding: 4px 0; cursor: pointer; font-size: 13px; }
+.dock textarea.else { background: var(--row); color: var(--fg); border: 1px solid var(--chip); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 14px; resize: none; box-sizing: border-box; width: 100%; }
 .other { display: flex; gap: 6px; }
 .row2 { display: flex; gap: 8px; }
 .row2 > * { flex: 1; }

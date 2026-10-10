@@ -6,7 +6,7 @@
 // the recipe inbox's /shop/api/ ones. Menu fork: it also shows the inbox's push notifications, and
 // opens the Add/Monitor (add/) and Plan chat (plan/) pages from their own copies.
 
-const VERSION = "76cec31d7548";
+const VERSION = "54e0ab00d067";
 const CACHE = `menu-shop-${VERSION}`;
 const SHELL = ["/shop/", "/shop/app.css", "/shop/app.js", "/shop/api.js", "/shop/buy.js", "/shop/list.js",
   "/shop/sync.js", "/shop/queue.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/foodset.js", "/shop/inbox.js", "/shop/add/", "/shop/add/add.js", "/shop/add/add.css",
@@ -28,7 +28,9 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin || !url.pathname.startsWith("/shop/") || url.pathname.startsWith("/shop/api/")) return;
   // a page opens from its own cached copy whatever its query (?job=, a shared ?url=)
-  const page = ["/shop/add/", "/shop/plan/"].find(p => url.pathname.startsWith(p.slice(0, -1)));
+  // every page in SHELL routes to itself, so a new page needs only its SHELL entry (an older worker
+  // without it sends that page's first open to the shopping list, as Plan's did once on the phone)
+  const page = SHELL.find(p => p.endsWith("/") && p !== "/shop/" && url.pathname.startsWith(p.slice(0, -1)));
   const key = e.request.mode === "navigate" ? page || "/shop/" : url.pathname;
   e.respondWith(caches.open(CACHE).then(c => c.match(key)).then(hit => hit || fetch(e.request)));
 });

@@ -54,12 +54,22 @@ export const active = job => job.state === "queued" || job.state === "running";
  * "description", "ingredients" and "step N".
  */
 export class Draft {
-  constructor() { this.answers = {}; this.comments = {}; }
+  constructor() { this.answers = {}; this.comments = {}; this.was = {}; }
   answer(id, value) { this.answers[id] = value; }
   comment(part, text) { if (text.trim()) this.comments[part] = text.trim(); else delete this.comments[part]; }
   /** The first question still unanswered, or null. */
   next(questions) { return questions.find(q => this.answers[q.id] == null) || null; }
   answered(questions) { return questions.filter(q => this.answers[q.id] != null).length; }
+  /** Back one question: the one before the current (or the last, once all are answered) is open
+   *  again, and its answer moves to `was` so the page can show it as picked. */
+  back(questions) {
+    const cur = this.next(questions), i = cur ? questions.indexOf(cur) : questions.length;
+    const prev = questions[i - 1];
+    if (!prev) return null;
+    this.was[prev.id] = this.answers[prev.id];
+    delete this.answers[prev.id];
+    return prev;
+  }
   hasComments() { return Object.keys(this.comments).length > 0; }
   /** The body the server's reply endpoint takes. */
   body(action, mode) {

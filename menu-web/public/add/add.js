@@ -70,6 +70,9 @@ async function start(mode) {
 
 async function send(action) {
   if (sending || !open) return;
+  const note = $("else");
+  if (note) draftFor(open.id).comment("recipe", note.value);
+  settle(); // a focused box would stop the redraws below (iOS leaves it focused on a button tap)
   sending = true; draw();
   try {
     open = await api.reply(open.id, draftFor(open.id).body(action));
@@ -206,22 +209,45 @@ function preview(r) {
 function question(q, d, total) {
   const box = [];
   const i = d.answered(open.questions) + 1;
-  box.push(el("p", "from", `${q.kind === "claude" ? "Claude asks · " : ""}Question ${i} of ${total}`), el("p", "q", q.text));
+  const top = el("div", "qtop");
+  top.append(el("p", "from", `${q.kind === "claude" ? "Claude asks · " : ""}Question ${i} of ${total}`));
+  if (open.questions.indexOf(q) > 0) top.append(btn("qback", "‹ Back", () => { settle(); d.back(open.questions); otherFor = null; draw(); }));
+  box.push(top, el("p", "q", q.text));
   if (q.why) box.push(el("p", "from", q.why));
+  const was = d.was[q.id];
   const opts = el("div", "opts");
-  const pick = v => { settle(); d.answer(q.id, v); otherFor = null; if (!open.preview && !d.next(open.questions)) send("add"); else draw(); };
-  q.options.forEach((o, n) => opts.append(btn("opt" + (n === (q.suggested ?? 0) ? " rec" : ""), o, () => pick(o))));
-  opts.append(btn("opt", "Other…", () => { otherFor = q.id; draw(); }));
+  const pick = v => { settle(); d.answer(q.id, v); otherFor = null; draw(); };
+  q.options.forEach((o, n) => opts.append(btn("opt" + (n === (q.suggested ?? 0) ? " rec" : "") + (o === was ? " picked" : ""), o, () => pick(o))));
+  const typed = was != null && !q.options.includes(was);
+  opts.append(btn("opt" + (typed ? " picked" : ""), "Other…", () => { otherFor = q.id; draw(); }));
   box.push(opts);
+  if (typed && otherFor !== q.id) box.push(el("p", "from", `You said: ${was}`));
   if (otherFor === q.id) {
     const row = el("div", "other"), input = el("input");
     input.placeholder = "Your answer";
+    if (typed) input.value = was;
     input.addEventListener("keydown", e => { if (e.key === "Enter" && input.value.trim()) pick(input.value.trim()); });
     row.append(input, btn("btn", "OK", () => input.value.trim() && pick(input.value.trim())));
     box.push(row);
     setTimeout(() => input.focus(), 0);
   }
   return box;
+}
+
+// the last step before sending: one more thing to tell Claude, in plain words (sent as a "recipe" note)
+function anythingElse(j, d) {
+  const out = [], top = el("div", "qtop");
+  top.append(el("p", "q", "Anything else?"));
+  if (j.questions.length) top.append(btn("qback", "‹ My answers", () => { settle(); d.back(j.questions); draw(); }));
+  const note = el("textarea", "else");
+  Object.assign(note, { id: "else", rows: 2, maxLength: 1000, value: d.elseRaw ?? d.comments.recipe ?? "",
+    placeholder: "Optional. For example: make it serve 6, less spicy, or call it Mom's chili" });
+  note.addEventListener("input", () => {
+    d.elseRaw = note.value; d.comment("recipe", note.value);
+    $("acts")?.replaceWith(actions(open, d)); // "Send changes" once there's a note; the box itself isn't redrawn
+  });
+  out.push(top, note);
+  return out;
 }
 
 function dock() {
@@ -257,7 +283,16 @@ function dock() {
     if (!Array.isArray(j.questions)) { box.append(el("p", "from", "Loading…")); return box; }
     const q = d.next(j.questions);
     if (q) { box.append(...question(q, d, j.questions.length)); return box; }
+    box.append(...anythingElse(j, d));
   }
+  box.append(actions(j, d));
+  return box;
+}
+
+// the note count and the buttons under the questions; redrawn alone while "Anything else?" is typed in
+function actions(j, d) {
+  const box = el("div", "acts");
+  box.id = "acts";
   const n = Object.keys(d.comments).length;
   if (n) box.append(el("p", "from", n === 1 ? "1 note for Claude" : `${n} notes for Claude`));
   else if (j.state === "done") box.append(el("p", "from", "Tap any part of the recipe to change it."));
@@ -288,7 +323,7 @@ let drawn = ""; // what the layer last showed: a poll that brings nothing new le
 function draw() {
   drawList();
   // keep a half-typed note or answer: a poll doesn't redraw over a focused box
-  if (document.activeElement && document.activeElement.tagName === "INPUT" && $("layer").contains(document.activeElement)) return;
+  if (document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) && $("layer").contains(document.activeElement)) return;
   const d = open && draftFor(open.id);
   const key = JSON.stringify([open, share, editing, otherFor, sending, d && d.answers, d && d.comments]);
   if (key === drawn) return;
