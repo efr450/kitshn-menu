@@ -15,6 +15,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import de.kitshn.ui.route.alerts.RouteAlertInaccessibleInstance
 import de.kitshn.ui.route.alerts.RouteAlertOutdatedV1Instance
+import de.kitshn.ui.route.inbox.RoutePlan
 import de.kitshn.ui.route.inbox.RouteRecipeInbox
 import de.kitshn.ui.route.main.RouteMain
 import de.kitshn.ui.route.onboarding.RouteOnboarding
@@ -54,6 +55,9 @@ val routes = listOf(
 
     // Menu fork: Add/Monitor Recipe (the recipe inbox page)
     Route("recipeInbox", Animation.SLIDE_VERTICAL) { RouteRecipeInbox(p = it) },
+
+    // Menu fork: Plan with Claude (the Plan chat page)
+    Route("plan", Animation.SLIDE_VERTICAL) { RoutePlan(p = it) },
 
     Route(
         "shopping/shoppingMode",

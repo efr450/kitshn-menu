@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="theme-color" content="#17140c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Plan">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Plan with Claude</title>
+  <link rel="manifest" href="/shop/plan/manifest.json">
+  <link rel="icon" href="/shop/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/shop/icon-192.png">
+  <link rel="stylesheet" href="/shop/app.css">
+  <link rel="stylesheet" href="/shop/plan/plan.css">
+  <script type="module" src="/shop/plan/plan.js"></script>
+</head>
+<body class="chat">
+  <header class="top">
+    <h1>Plan with Claude</h1>
+    <div class="who" id="who" role="group" aria-label="Who is typing"></div>
+    <button class="more" id="more" type="button" aria-label="More" aria-haspopup="true">⋯</button>
+  </header>
+  <div class="menu" id="menu" hidden></div>
+  <p class="note" id="note" hidden></p>
+  <main class="thread" id="thread" aria-live="polite"></main>
+  <footer class="dock">
+    <div class="starters" id="starters"></div>
+    <form class="compose" id="compose">
+      <textarea id="text" rows="1" placeholder="Message Claude" aria-label="Message to Claude" enterkeyhint="send"></textarea>
+      <button class="send" id="send" type="submit" aria-label="Send">↑</button>
+    </form>
+  </footer>
+  <div id="layer"></div>
+  <p class="toast" id="toast" role="status" hidden></p>
+</body>
+</html>

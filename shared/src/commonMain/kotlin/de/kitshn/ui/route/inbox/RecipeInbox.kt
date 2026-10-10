@@ -18,10 +18,17 @@ import io.ktor.http.encodeURLParameter
  * menu-web's LAN port 8092, where nginx serves the same /shop/ paths.
  */
 fun inboxPageUrl(instanceUrl: String, shared: String? = null): String {
+    val base = menuWebUrl(instanceUrl, "add/")
+    return if(shared.isNullOrBlank()) base else base + "?url=" + shared.encodeURLParameter()
+}
+
+/** Menu fork: the Plan chat page (menu-web/public/plan/), at the same origin as Add/Monitor. */
+fun planPageUrl(instanceUrl: String): String = menuWebUrl(instanceUrl, "plan/")
+
+private fun menuWebUrl(instanceUrl: String, screen: String): String {
     val https = instanceUrl.startsWith("https://", ignoreCase = true)
     val host = instanceUrl.substringAfter("://").substringBefore("/").substringBefore(":")
-    val base = if(https) "https://$host:8443/shop/add/" else "http://$host:8092/shop/add/"
-    return if(shared.isNullOrBlank()) base else base + "?url=" + shared.encodeURLParameter()
+    return if(https) "https://$host:8443/shop/$screen" else "http://$host:8092/shop/$screen"
 }
 
 /**
@@ -60,6 +67,20 @@ fun RouteRecipeInbox(p: RouteParameters) {
     InboxPage(
         url = page,
         load = loads,
+        auth = { p.vm.tandoorClient?.credentials?.let { inboxAuth(it.token?.token, it.cookie) } },
+        onRecipe = { p.vm.viewRecipe(it) },
+        onBack = { p.onBack?.invoke() }
+    )
+}
+
+/** Menu fork: Plan with Claude, the Plan chat page (Menu repo, importer/menu_import/plan_chat.py) in
+ *  the same web view as Add/Monitor, signed in the same way. */
+@Composable
+fun RoutePlan(p: RouteParameters) {
+    val credentials = p.vm.tandoorClient?.credentials ?: return
+    InboxPage(
+        url = planPageUrl(credentials.instanceUrl),
+        load = 0,
         auth = { p.vm.tandoorClient?.credentials?.let { inboxAuth(it.token?.token, it.cookie) } },
         onRecipe = { p.vm.viewRecipe(it) },
         onBack = { p.onBack?.invoke() }

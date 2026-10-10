@@ -3,6 +3,7 @@ package de.kitshn
 import de.kitshn.ui.route.inbox.inboxAuth
 import de.kitshn.ui.route.inbox.inboxKeepsInApp
 import de.kitshn.ui.route.inbox.inboxPageUrl
+import de.kitshn.ui.route.inbox.planPageUrl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -19,6 +20,12 @@ class RecipeInboxTest {
     @Test
     fun phonesOnTailscaleUseThePageOrigin() {
         assertEquals("https://server.tail2d7086.ts.net:8443/shop/add/", inboxPageUrl("https://server.tail2d7086.ts.net"))
+    }
+
+    @Test
+    fun thePlanPageSitsBesideAddMonitor() {
+        assertEquals("http://server.home:8092/shop/plan/", planPageUrl("http://server.home"))
+        assertEquals("https://server.tail2d7086.ts.net:8443/shop/plan/", planPageUrl("https://server.tail2d7086.ts.net/"))
     }
 
     @Test

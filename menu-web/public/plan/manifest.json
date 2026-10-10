@@ -1,0 +1,16 @@
+{
+  "name": "Plan with Claude",
+  "short_name": "Plan",
+  "description": "Chat with Claude about what to eat. It puts the meals on the Meal Plan and the shopping list.",
+  "start_url": "/shop/plan/",
+  "scope": "/shop/plan/",
+  "id": "/shop/plan/",
+  "display": "standalone",
+  "background_color": "#17140c",
+  "theme_color": "#17140c",
+  "icons": [
+    { "src": "/shop/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/shop/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/shop/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

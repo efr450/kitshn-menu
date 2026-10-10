@@ -3,12 +3,14 @@
 // old and new files. VERSION is a hash of the files: `npm run sw-version` updates it, and
 // test/sw.test.js fails when it's stale. A changed VERSION makes phones fetch the new set; the next
 // open shows it. Tandoor's /api/ requests pass straight through (sync.js keeps the list), and so do
-// the recipe inbox's /shop/api/ ones. Menu fork: it also shows the inbox's push notifications.
+// the recipe inbox's /shop/api/ ones. Menu fork: it also shows the inbox's push notifications, and
+// opens the Add/Monitor (add/) and Plan chat (plan/) pages from their own copies.
 
-const VERSION = "ee9064d79dd6";
+const VERSION = "f60a3ecdae3f";
 const CACHE = `menu-shop-${VERSION}`;
 const SHELL = ["/shop/", "/shop/app.css", "/shop/app.js", "/shop/api.js", "/shop/buy.js", "/shop/list.js",
   "/shop/sync.js", "/shop/queue.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/foodset.js", "/shop/inbox.js", "/shop/add/", "/shop/add/add.js", "/shop/add/add.css",
+  "/shop/planchat.js", "/shop/plan/", "/shop/plan/plan.js", "/shop/plan/plan.css", "/shop/plan/manifest.json",
   "/shop/manifest.json", "/shop/icon.svg", "/shop/icon-192.png", "/shop/icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -26,7 +28,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin || !url.pathname.startsWith("/shop/") || url.pathname.startsWith("/shop/api/")) return;
   // a page opens from its own cached copy whatever its query (?job=, a shared ?url=)
-  const key = e.request.mode === "navigate" ? (url.pathname.startsWith("/shop/add") ? "/shop/add/" : "/shop/") : url.pathname;
+  const page = ["/shop/add/", "/shop/plan/"].find(p => url.pathname.startsWith(p.slice(0, -1)));
+  const key = e.request.mode === "navigate" ? page || "/shop/" : url.pathname;
   e.respondWith(caches.open(CACHE).then(c => c.match(key)).then(hit => hit || fetch(e.request)));
 });
 

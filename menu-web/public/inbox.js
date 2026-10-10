@@ -80,8 +80,9 @@ export function recipeIdOf(link) {
   return m ? Number(m[1]) : null;
 }
 
-/** The inbox server's API. @param fetchFn fetch, injectable for tests @param bridge the app, if any */
-export function inboxApi({ fetchFn = (...a) => fetch(...a), bridge = appBridge() } = {}) {
+/** Requests to the inbox server, signed in like the page (the app's sign-in, else the browser's
+ *  cookie). Errors carry `kind`: "signin", "offline" or "error". The Plan page uses it too. */
+export function inboxCaller({ fetchFn = (...a) => fetch(...a), bridge = appBridge() } = {}) {
   async function call(path, init = {}) {
     let r;
     const sign = bridge && bridge.auth();
@@ -98,7 +99,13 @@ export function inboxApi({ fetchFn = (...a) => fetch(...a), bridge = appBridge()
     if (!r.ok) throw failure("error", data.error || `HTTP ${r.status}`);
     return data;
   }
-  const post = (path, body) => call(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const post = (path, body, init = {}) => call(path, { method: "POST", ...init, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { call, post };
+}
+
+/** The inbox server's API. @param fetchFn fetch, injectable for tests @param bridge the app, if any */
+export function inboxApi(opts = {}) {
+  const { call, post } = inboxCaller(opts);
   return {
     jobs: () => call("/jobs"),
     job: id => call(`/jobs/${encodeURIComponent(id)}`),

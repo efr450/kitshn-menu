@@ -51,8 +51,20 @@ createServer(async (req, res) => {
     res.writeHead(r.status, r.status === 204 ? {} : { "Content-Type": r.headers.get("content-type") || "application/json" }).end(Buffer.from(await r.arrayBuffer()));
     return;
   }
+  // Menu fork: the Plan chat's API on the inbox server (Menu repo, port 8091), signed in with the token
+  if (url.pathname.startsWith("/shop/api/inbox/plan")) {
+    if (req.method !== "GET" && req.headers["content-type"] !== "application/json") { res.writeHead(403).end(); return; }
+    const body = req.method === "GET" ? undefined : await new Promise(r => { const c = []; req.on("data", d => c.push(d)); req.on("end", () => r(Buffer.concat(c))); });
+    const r = await fetch("http://127.0.0.1:8091" + url.pathname.slice("/shop".length) + url.search, {
+      method: req.method, body, headers: { Authorization: `Bearer ${env.TANDOOR_TOKEN}`, "Content-Type": "application/json", Accept: "application/json" },
+    }).catch(() => null);
+    if (!r) { res.writeHead(502).end(); return; }
+    res.writeHead(r.status, { "Content-Type": "application/json" }).end(Buffer.from(await r.arrayBuffer()));
+    return;
+  }
   if (!url.pathname.startsWith("/shop/")) { res.writeHead(302, { Location: "/shop/" }).end(); return; }
-  const rel = normalize(url.pathname.slice("/shop/".length) || "index.html").replace(/^(\.\.[/\\])+/, "");
+  const path = url.pathname.slice("/shop/".length);
+  const rel = normalize(!path || path.endsWith("/") ? path + "index.html" : path).replace(/^(\.\.[/\\])+/, "");
   try {
     const file = readFileSync(join(ROOT, rel));
     res.writeHead(200, { "Content-Type": TYPES[extname(rel)] || "application/octet-stream", "Cache-Control": "no-cache",

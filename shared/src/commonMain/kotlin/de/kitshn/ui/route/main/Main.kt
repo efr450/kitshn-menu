@@ -3,6 +3,7 @@ package de.kitshn.ui.route.main
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.PostAdd
+import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
@@ -145,6 +146,14 @@ fun RouteMain(p: RouteParameters) {
                 label = { Text(text = "Add/Monitor", maxLines = 1) },
                 selected = false,
                 onClick = { p.vm.navigateTo("recipeInbox") }
+            )
+
+            // Menu fork: Plan with Claude, the Plan chat page in the same web view (ui/route/inbox)
+            if(isOnline) item(
+                icon = { Icon(Icons.Outlined.Forum, contentDescription = "Plan with Claude") },
+                label = { Text(text = "Plan", maxLines = 1) },
+                selected = false,
+                onClick = { p.vm.navigateTo("plan") }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
