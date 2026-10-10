@@ -41,17 +41,29 @@ export function merge(items, incoming) {
 }
 
 /**
- * Claude's text as blocks to draw: {type: "p" | "li", parts: [{text, bold}]}. Only what replies
- * use: paragraphs, "- " or "1. " list lines and **bold**. Never HTML, so nothing in a reply runs.
+ * Claude's text as blocks to draw: {type: "p" | "li", parts: [{text, bold, href?}]}. Only what
+ * replies use: paragraphs, "- " or "1. " list lines, **bold** and [links](https://...). Never HTML,
+ * so nothing in a reply runs; a link keeps only an http(s) address. A "Sources:" list that web
+ * search appends is dropped: the Add card already names the site.
  */
 export function blocks(text) {
   const out = [];
-  for (const raw of String(text || "").split("\n")) {
+  const lines = String(text || "").replace(/\n\s*\**sources:?\**\s*\n(?:\s*[-*•].*(?:\n|$))+\s*$/i, "\n").split("\n");
+  for (const raw of lines) {
     const line = raw.trim();
     if (!line) continue;
     const li = /^(?:[-*•]|\d+[.)])\s+(.*)$/.exec(line);
     const body = (li ? li[1] : line).replace(/^#{1,6}\s+/, "");
-    const parts = body.split(/\*\*(.+?)\*\*/g).map((t, i) => ({ text: t, bold: i % 2 === 1 })).filter(p => p.text);
+    const parts = [];
+    // [text](url) splits into text, label, url, text, ...; bold is read inside the plain stretches
+    const bits = body.split(/\[([^\]]+)\]\((\S*?(?:\([^\s()]*\)\S*?)*)\)/g);  // one level of (...) inside a URL
+    for (let i = 0; i < bits.length; i += 3) {
+      bits[i].split(/\*\*(.+?)\*\*/g).forEach((t, j) => { if (t) parts.push({ text: t, bold: j % 2 === 1 }); });
+      if (i + 2 < bits.length) {
+        const label = bits[i + 1].replace(/\*\*/g, ""), href = bits[i + 2];
+        parts.push(/^https?:\/\//i.test(href) ? { text: label, bold: false, href } : { text: label, bold: false });
+      }
+    }
     out.push({ type: li ? "li" : "p", parts });
   }
   return out;

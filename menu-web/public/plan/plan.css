@@ -28,6 +28,7 @@ body.chat { position: fixed; inset: 0; display: flex; flex-direction: column; pa
 .chip.undone span { text-decoration: line-through; }
 .chip .undo { flex: none; }
 .card { background: var(--row); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: none; }
+.card.old { opacity: .55; }
 .card h3 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
 .day { display: grid; grid-template-columns: 74px 1fr; gap: 8px; padding: 5px 0; border-top: 1px solid #2c2618; font-size: 14px; }
 .day:first-of-type { border-top: 0; }

@@ -96,6 +96,8 @@ export function inboxCaller({ fetchFn = (...a) => fetch(...a), bridge = appBridg
     }
     if (r.status === 401) throw failure("signin", "sign in");
     const data = await r.json().catch(() => ({}));
+    // nginx answers 502-504 when the inbox server at home is down or restarting
+    if (r.status >= 502 && r.status <= 504) throw failure("error", "Can't reach home right now. Try again in a moment.");
     if (!r.ok) throw failure("error", data.error || `HTTP ${r.status}`);
     return data;
   }

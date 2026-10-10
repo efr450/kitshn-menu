@@ -6,7 +6,7 @@
 // the recipe inbox's /shop/api/ ones. Menu fork: it also shows the inbox's push notifications, and
 // opens the Add/Monitor (add/) and Plan chat (plan/) pages from their own copies.
 
-const VERSION = "f7c7bdc9ee55";
+const VERSION = "5f73197feb56";
 const CACHE = `menu-shop-${VERSION}`;
 const SHELL = ["/shop/", "/shop/app.css", "/shop/app.js", "/shop/api.js", "/shop/buy.js", "/shop/list.js",
   "/shop/sync.js", "/shop/queue.js", "/shop/parse.js", "/shop/foods.js", "/shop/edit.js", "/shop/actions.js", "/shop/foodset.js", "/shop/inbox.js", "/shop/add/", "/shop/add/add.js", "/shop/add/add.css",

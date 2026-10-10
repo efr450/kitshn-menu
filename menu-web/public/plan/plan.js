@@ -61,7 +61,10 @@ function fillMarkdown(n, text) {
   let list = null;
   for (const b of blocks(text)) {
     const line = el(b.type === "li" ? "li" : "p");
-    for (const part of b.parts) line.append(part.bold ? el("b", null, part.text) : document.createTextNode(part.text));
+    for (const part of b.parts) {
+      if (part.href) line.append(Object.assign(el("a", null, part.text), { href: part.href, target: "_blank", rel: "noopener noreferrer" }));
+      else line.append(part.bold ? el("b", null, part.text) : document.createTextNode(part.text));
+    }
     if (b.type === "li") { if (!list) { list = el("ul"); n.append(list); } list.append(line); }
     else { list = null; n.append(line); }
   }
@@ -73,8 +76,11 @@ function chipNode(item) {
   return n;
 }
 function planNode(item) {
-  const n = el("div", "card");
-  n.append(el("h3", null, "Plan"));
+  // only the newest plan card is current; older ones are what the plan looked like then
+  const latest = chat && [...chat.items].reverse().find(i => i.kind === "plan");
+  const old = latest && latest.seq !== item.seq;
+  const n = el("div", "card" + (old ? " old" : ""));
+  n.append(el("h3", null, old ? "Plan, earlier" : "Plan"));
   for (const d of item.days) {
     const row = el("div", "day"), meals = el("div", "meals");
     row.append(el("b", null, d.label));
@@ -136,8 +142,10 @@ function drawThread(full = false) {
     return;
   }
   t.querySelector(".hello")?.remove();
+  const latestPlan = [...items].reverse().find(i => i.kind === "plan");
   for (const item of items) {
-    const json = JSON.stringify(item), had = nodes.get(item.seq);
+    // an older plan card redraws as "earlier" when a newer one arrives
+    const json = JSON.stringify(item) + (item.kind === "plan" && item !== latestPlan ? "old" : ""), had = nodes.get(item.seq);
     if (had && had[0] === json) continue;
     const node = itemNode(item);
     if (had) had[1].replaceWith(node); else t.insertBefore(node, streamNode);
@@ -241,11 +249,19 @@ function drawMenu() {
 $("more").addEventListener("click", e => { e.stopPropagation(); drawMenu(); $("menu").hidden = !$("menu").hidden; });
 document.addEventListener("click", e => { if (!$("menu").contains(e.target)) closeMenu(); });
 
+let opening = false;
 async function profiles() {
+  if (opening || $("layer").firstChild) return;  // a double tap mustn't stack two sheets and two history entries
+  opening = true;
   let data;
-  try { data = await api.profiles(); } catch (e) { return trouble(e); }
+  try { data = await api.profiles(); } catch (e) { opening = false; return trouble(e); }
+  opening = false;
   const layer = $("layer"), full = el("div", "full"), head = el("header"), body = el("div", "scroll");
-  const close = () => layer.replaceChildren();
+  // a history entry, so the phone's or tablet's Back closes the sheet instead of leaving the page
+  history.pushState({ sheet: "profiles" }, "");
+  const shut = () => { layer.replaceChildren(); removeEventListener("popstate", shut); };
+  addEventListener("popstate", shut);
+  const close = () => history.back();
   head.append(btn("back", "‹ Back", close), el("h2", null, "Taste profiles"));
   body.append(el("p", "hint", "Claude reads these at the start of every chat and adds to them when you tell it something lasting. Edit freely: one note per line."));
   const boxes = data.people.map(p => {

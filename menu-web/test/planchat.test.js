@@ -25,6 +25,14 @@ test("Claude's text becomes paragraphs, list lines and bold, never HTML", () => 
     { type: "p", parts: [{ text: "Head", bold: false }] },
   ]);
   assert.deepEqual(blocks(""), []);
+  assert.deepEqual(blocks("I found [Averie's **Skillet**](https://a.test/s) for Wed. [x](javascript:alert(1))"), [
+    { type: "p", parts: [{ text: "I found ", bold: false }, { text: "Averie's Skillet", bold: false, href: "https://a.test/s" },
+      { text: " for Wed. ", bold: false }, { text: "x", bold: false }] },
+  ]);
+  assert.deepEqual(blocks("[Chili](https://w.test/wiki/Chili_(food)) ok")[0].parts,
+    [{ text: "Chili", bold: false, href: "https://w.test/wiki/Chili_(food)" }, { text: " ok", bold: false }]);
+  assert.deepEqual(blocks("Tap Add.\n\nSources:\n- [Averie Cooks](https://a.test/s)\n- [B](https://b.test)"),
+    [{ type: "p", parts: [{ text: "Tap Add.", bold: false }] }]);
 });
 
 test("plan card notes and adder states read plainly", () => {
@@ -52,4 +60,9 @@ test("the API long-polls with the version and posts who typed", async () => {
   assert.deepEqual(JSON.parse(calls[4][2]), { seq: 4, who: "ethan", yes: false });
   assert.deepEqual(JSON.parse(calls[2][2]), { who: "ethan", text: "tacos?" });
   assert.deepEqual(JSON.parse(calls[3][2]), { seq: 3, who: "lindsay" });
+});
+
+test("home being down reads as such, not as an HTTP code", async () => {
+  const api = planApi({ fetchFn: async () => ({ ok: false, status: 502, json: async () => { throw new Error("html"); } }), bridge: null });
+  await assert.rejects(api.home(), { kind: "error", message: "Can't reach home right now. Try again in a moment." });
 });
