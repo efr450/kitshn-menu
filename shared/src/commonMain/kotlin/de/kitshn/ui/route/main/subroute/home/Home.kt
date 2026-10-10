@@ -150,6 +150,7 @@ fun RouteMainSubrouteHome(
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
+                    // Menu fork: no "Add or import recipe" button; recipes come in through Add/Monitor
                     VerticalFloatingToolbar(
                         expanded = isScrollingUp,
                         content = {
@@ -166,16 +167,6 @@ fun RouteMainSubrouteHome(
                                 client = p.vm.tandoorClient
                             ) {
                                 p.vm.refreshApp()
-                            }
-                        },
-                        floatingActionButton = {
-                            FloatingToolbarDefaults.StandardFloatingActionButton(
-                                modifier = Modifier.testTag(TestTagRepository.ACTION_ADD.name),
-                                onClick = {
-                                    recipeCreationTypePickerState.open()
-                                }
-                            ) {
-                                Icon(Icons.Rounded.Add, stringResource(Res.string.action_add_or_import_recipe))
                             }
                         }
                     )
