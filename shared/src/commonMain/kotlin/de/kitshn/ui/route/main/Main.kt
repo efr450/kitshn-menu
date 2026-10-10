@@ -1,7 +1,6 @@
 package de.kitshn.ui.route.main
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Book
@@ -96,8 +95,6 @@ fun RouteMain(p: RouteParameters) {
 
     val isOnline by p.vm.isOnline.collectAsState()
     val isOffline = !isOnline
-    val openKitchen = rememberKitchenOpener()
-    val instanceUrl = p.vm.tandoorClient?.credentials?.instanceUrl
 
     NavigationSuiteScaffold(
         navigationSuiteColors = NavigationSuiteDefaults.colors(
@@ -130,16 +127,6 @@ fun RouteMain(p: RouteParameters) {
                 )
             }
 
-            // Menu fork: "Claude" opens a fresh Kitchen chat, in the Claude app on Android. The
-            // fallback: the desktop running Tandoor serves port 8765 as a redirect to
-            // claude.ai/code/new (Menu repo, kitchen/).
-            if(isOnline && instanceUrl != null) item(
-                icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = "Claude") },
-                label = { Text(text = "Claude", maxLines = 1) },
-                selected = false,
-                onClick = { openKitchen(kitchenUrl(instanceUrl)) }
-            )
-
             // Menu fork: Add/Monitor Recipe, the recipe inbox page in a web view (ui/route/inbox)
             if(isOnline) item(
                 icon = { Icon(Icons.Outlined.PostAdd, contentDescription = "Add/Monitor Recipe") },
@@ -164,17 +151,6 @@ fun RouteMain(p: RouteParameters) {
     TandoorServerVersionCompatibilityDialog(vm = p.vm)
     TandoorBetaInfoDialog(vm = p.vm)
 }
-
-// Menu fork: the Kitchen redirect on the Tandoor host, e.g. http://192.168.50.196 -> http://192.168.50.196:8765/
-internal fun kitchenUrl(instanceUrl: String): String {
-    val host = instanceUrl.substringAfter("://").substringBefore("/").substringBefore(":")
-    return "http://$host:8765/"
-}
-
-// Menu fork: opens a Kitchen chat. Android tries the Claude app first and falls back to this
-// URL in the browser, reusing one tab for it.
-@Composable
-expect fun rememberKitchenOpener(): (String) -> Unit
 
 // alternate saving method because multiple rememberNavController() cause problem at jvmMain and iosMain
 @Composable

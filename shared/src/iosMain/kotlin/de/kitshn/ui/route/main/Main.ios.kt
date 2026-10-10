@@ -70,9 +70,3 @@ internal class ComposeNavGraphNavigator(
         AnimatedContentTransitionScope<NavBackStackEntry>.() -> SizeTransform?)? = null
     }
 }
-// Menu fork: see rememberKitchenOpener in Main.kt.
-@Composable
-actual fun rememberKitchenOpener(): (String) -> Unit {
-    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    return { uriHandler.openUri(it) }
-}
