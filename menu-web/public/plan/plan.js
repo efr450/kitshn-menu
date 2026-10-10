@@ -190,6 +190,7 @@ async function listen() {
     } catch (e) {
       if (poll !== mine) return;
       if (e.kind === "signin") trouble(e);  // shown, but keep trying: Tandoor may only be restarting
+      if (e.message === "No such chat.") { chat = null; drawThread(true); return; }  // pruned or cleared at home: start fresh
       wait = Math.min((wait || 1000) * 2, 15000);  // offline or home restarting: back off, keep trying
       await new Promise(r => setTimeout(r, wait));
     }
